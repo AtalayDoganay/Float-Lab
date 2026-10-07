@@ -1,0 +1,45 @@
+name: Windows build
+
+# Builds and tests on Windows and uploads the packaged artifacts to the workflow
+# run. It never creates a release, tag, or any public publication.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install pinned dependencies
+        run: npm ci
+
+      - name: Unit and behavioral tests
+        run: npm test
+
+      - name: Hidden-window smoke scenarios
+        run: npm run smoke
+
+      - name: Package and make Windows artifacts
+        run: npm run make
+
+      - name: Smoke-test the packaged executable
+        run: node scripts/smoke.mjs --exe "out/Roseflow PC Mac Training-win32-x64/RoseflowPCMacTraining.exe"
+
+      - name: Upload artifacts (no release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: roseflow-pc-mac-training-windows-${{ github.sha }}
+          path: out/make/**
+          if-no-files-found: error

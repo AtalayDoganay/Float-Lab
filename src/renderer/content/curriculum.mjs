@@ -1,0 +1,203 @@
+// Ten lessons and twenty questions ported verbatim from the prototype
+// (Float-Lab-Handoff/app/app.js lines 5–14). Stable ids were added; wording,
+// answer keys, and wrong-answer explanations are unchanged. `photo` now names a
+// bundled reference image; `tryControls` lists the workspace controls a lesson's
+// "Try it" step highlights.
+
+const Q = (id, text, options, correct, why, hints) => ({ id, text, options, correct, why, hints });
+
+export const LESSONS = Object.freeze([
+  {
+    id: 'l01',
+    short: 'The whole system',
+    title: 'How does a click become movement?',
+    intro: 'Start with the big picture. Explore the three jobs in a show-control system.',
+    heading: 'The plan, the controller, the mechanism',
+    body: 'PC•MACs is where you work with the show. Controller hardware receives commands and interfaces with outputs. An actuator is the part that produces physical movement. Your workshop photo shows the computer beside the control enclosure.',
+    simple: 'Think of a performance: the show is the script, the controller follows it, and the mechanism performs the action.',
+    take: 'Software, controller, and mechanism have different jobs.',
+    demo: 'flow',
+    photo: '04-1000066739.jpg',
+    tryControls: ['flow-part'],
+    questions: [
+      Q('l01q1', 'Which part creates physical movement?', ['The actuator', 'The IP address', 'The timeline grid'], 0, 'An actuator turns supplied energy into movement. A timeline describes what should happen.', ['', 'An address identifies a network interface; it does not move anything.', 'The grid represents timing. The physical mechanism performs the movement.']),
+      Q('l01q2', 'You want a movement to happen later in the show. What concept matters?', ['The controller’s network address', 'The timing of the command', 'The color of the enclosure'], 1, 'Changing when the command happens changes its place in the sequence.', ['An address identifies a destination, not a time.', '', 'The enclosure color does not schedule actions.']),
+    ],
+  },
+  {
+    id: 'l02',
+    short: 'Channels & signals',
+    title: 'A channel carries one control value.',
+    intro: 'Try an ON/OFF signal, then a variable level. Notice how many different values each can represent.',
+    heading: 'Digital or analog?',
+    body: 'In PC•MACs, a digital channel has two states: on and off. An analog channel carries a variable level, such as a dimming command. “Analog” here describes the control function; show data can still be stored and transmitted digitally.',
+    simple: 'A switch has two choices. A dimmer has many levels.',
+    take: 'Use ON/OFF for two-state actions; use a variable channel when a level matters.',
+    demo: 'signals',
+    photo: null,
+    tryControls: ['signal-toggle', 'level-slider'],
+    questions: [
+      Q('l02q1', 'Which channel fits a command that must vary from 0% to 100%?', ['An analog channel', 'A digital ON/OFF channel', 'A gateway'], 0, 'A variable-level channel can represent intermediate values.', ['', 'A single ON/OFF channel cannot directly represent 40% or 70%.', 'A gateway routes network traffic.']),
+      Q('l02q2', 'An ON/OFF channel is ON. What can you conclude?', ['The mechanism is at 255 cm', 'Its command is in the ON state', 'Its speed is maximum'], 1, 'ON tells you the state of that command. Physical behavior depends on the connected equipment.', ['A digital state is not a distance.', '', 'ON does not specify a physical speed.']),
+    ],
+  },
+  {
+    id: 'l03',
+    short: 'Understanding 0–255',
+    title: '255 is a value. It is not a distance.',
+    intro: 'Your screenshot shows 8-bit resolution. Move the slider and connect the number to a percentage.',
+    heading: '256 possible values',
+    body: 'Eight bits represent 256 integer values, from 0 through 255. For a simple normalized command, percentage = value ÷ 255 × 100. About 128 is halfway. The device and its calibration determine what that command means physically.',
+    simple: 'Imagine 256 marks on a slider. The marks tell you where the slider is, not how many centimeters a mechanism travels.',
+    take: '128 is about 50.2% of an 8-bit range, not automatically 128 cm, volts, or ohms.',
+    demo: 'value',
+    photo: null,
+    tryControls: ['command-slider', 'command-readout'],
+    questions: [
+      Q('l03q1', 'How many different values are there from 0 through 255?', ['255', '256', '8'], 1, 'Count zero too: 255 − 0 + 1 = 256.', ['Zero is also a valid value.', '', 'Eight is the number of bits, not the number of possible combinations.']),
+      Q('l03q2', 'A command is 128. How far has the mechanism moved?', ['Exactly 128 cm', 'Exactly 5 cm', 'You need the mapping and measured position'], 2, 'A command alone does not prove actual travel. You need the calibrated range and feedback.', ['The number has no built-in centimeter unit.', 'Five centimeters would depend on a specific calibration.', '']),
+    ],
+  },
+  {
+    id: 'l04',
+    short: 'Read your controller',
+    title: 'Card, axis, and channel are different.',
+    intro: 'Read the labels from your actual screen. Select an axis below and watch which DMX row it points to.',
+    heading: 'Three different identifiers',
+    body: 'Your photo shows Card Address 1, First Channel 6, and four axes numbered 0–3. The displayed rows pair 6 with axis 0, 7 with axis 1, 8 with axis 2, and 9 with axis 3. The screen also says “0-based”; keep that numbering convention in mind when comparing displays.',
+    simple: 'The card is a controller. The axis is one controlled movement on that card. The channel identifies the command slot for it.',
+    take: 'These are the displayed mappings in your photo, not universal settings for every controller.',
+    demo: 'axis',
+    photo: '07-1000066747.jpg',
+    tryControls: ['axis-select', 'term-menu'],
+    questions: [
+      Q('l04q1', 'In this screenshot, which axis is beside displayed channel 8?', ['Axis 0', 'Axis 2', 'Axis 8'], 1, 'The row is labeled 8 (2), pairing displayed channel 8 with axis 2.', ['Axis 0 is beside 6 in this photo.', '', 'The axis numbers here run from 0 to 3.']),
+      Q('l04q2', '“Terminal – COM3” and “IP Address 192.168.0.10” appear together. Are they the same kind of address?', ['Yes, COM3 means IP ending in .3', 'No, one is a serial-port label and one is an IP address', 'Yes, both are DMX channels'], 1, 'COM3 identifies a computer serial port. An IP address belongs to a network interface.', ['The number in a COM port label is not an IP octet.', '', 'DMX channel numbering is separate from both.']),
+    ],
+  },
+  {
+    id: 'l05',
+    short: 'Range & calibration',
+    title: 'The same command can mean a different position.',
+    intro: 'Change the example’s travel range, then move the command slider. The model assumes linear calibration.',
+    heading: 'Give the number a physical meaning',
+    body: 'The Min Scale and Max Scale settings relate command endpoints to actuator travel. In this exercise only, 0 maps to 0 cm and 255 maps to your chosen endpoint. Real calibration may have offsets or reversed direction. Values photographed on your controller are not confirmed centimeter readings.',
+    simple: 'Halfway across a 10 cm range is 5 cm. Halfway across a 20 cm range is 10 cm. The command percentage stayed the same.',
+    take: 'Calibration connects numbers to a mechanism. Do not copy example ranges onto real equipment.',
+    demo: 'calibration',
+    photo: '07-1000066747.jpg',
+    tryControls: ['calibration-range', 'command-slider'],
+    questions: [
+      Q('l05q1', 'In a linear 0–20 cm example, roughly where does command 128 point?', ['About 10 cm', '128 cm', '20 cm'], 0, '128 ÷ 255 × 20 is approximately 10.04 cm. This is the target in this example.', ['', 'The command is not itself a centimeter measurement.', '20 cm is the endpoint at command 255.']),
+      Q('l05q2', 'Your photo lists Min Scale 61 and Max Scale 147. Can we call those centimeters?', ['Yes, every scale uses centimeters', 'No, the units and calibration must be verified', 'Yes, because 147 is larger'], 1, 'The screenshot supplies settings, not their physical units. The controller documentation and team calibration establish their meaning.', ['The label does not say cm.', '', 'Relative size does not establish units.']),
+    ],
+  },
+  {
+    id: 'l06',
+    short: 'Feedback & PID',
+    title: '“Go there” is different from “I am there.”',
+    intro: 'Set a target, then let the simulated measured position catch up. Watch the error shrink.',
+    heading: 'Compare target with measurement',
+    body: 'Feedback reports the measured state. Error is target minus measured position. In a PID controller, P responds to present error, I accumulates error over time, and D responds to how quickly error changes. The animation below is just a simple approach-to-target model, not a Br-EFB or PID simulator.',
+    simple: 'You want your hand at a mark. Your eyes tell you where it is now. You adjust until the gap becomes small. A potentiometer is one possible position sensor: motion shifts a contact, changing resistance ratios and the sensed voltage. We have not identified your exact sensor from these photos.',
+    take: 'A position command does not prove the actuator reached it. Feedback provides the measurement.',
+    demo: 'feedback',
+    photo: '09-1000066749.jpg',
+    tryControls: ['command-slider', 'measure-run', 'measure-readout'],
+    questions: [
+      Q('l06q1', 'Target = 80%, measured position = 30%. What is target minus measured position?', ['110 percentage points', '50 percentage points', '30 percentage points'], 1, '80 − 30 = 50 percentage points of error.', ['Subtract measurement from target; do not add them.', '', '30% is the measured position, not the gap.']),
+      Q('l06q2', 'What does proportional gain respond to in the basic PID idea?', ['The present error', 'The IP address', 'Only elapsed show time'], 0, 'The proportional contribution changes with current error. This lesson does not prescribe hardware gain values.', ['', 'Network identity is unrelated to this control calculation.', 'Elapsed time alone does not tell you current position error.']),
+    ],
+  },
+  {
+    id: 'l07',
+    short: 'Timing & playback',
+    title: 'A timeline tells the command when to change.',
+    intro: 'Each block is one second. Turn blocks on or off, then play your eight-second light sequence.',
+    heading: 'A value at each moment',
+    body: 'A timeline organizes channel values over time. Here each block stores an ON/OFF command for a one-second interval. Playback reads the blocks in order. A motion timeline can similarly change target position over time, while the controller and mechanism determine the actual response.',
+    simple: '“On” is an action. “On from second 2 to second 4” is a scheduled action.',
+    take: 'Time is the horizontal direction. Channel values describe what is commanded at that time.',
+    demo: 'timeline',
+    photo: null,
+    tryControls: ['timeline-block', 'play', 'stop'],
+    questions: [
+      Q('l07q1', 'To make the light turn on only during seconds 2–4, which blocks should be ON?', ['Blocks 0, 1, 2, 3', 'Blocks 2 and 3', 'Every block'], 1, 'Block 2 covers 2–3 seconds and block 3 covers 3–4 seconds.', ['That would start at second 0.', '', 'That would leave the light on for the whole sequence.']),
+      Q('l07q2', 'Does an instant target jump guarantee instant physical motion?', ['Yes, software commands have no delay', 'No, actual motion has physical and controller limits', 'Only if the IP ends in .10'], 1, 'Mechanisms take time to move. A target change is a request, not proof of instantaneous travel.', ['The command can change faster than a mechanism can move.', '', 'An IP address does not set physical speed.']),
+    ],
+  },
+  {
+    id: 'l08',
+    short: 'Network settings',
+    title: 'An address, a boundary, and a way out.',
+    intro: 'Your network photo shows 192.168.0.10, mask 255.255.255.0, and gateway 192.168.0.1. Try a hypothetical laptop address.',
+    heading: 'Three fields, three jobs',
+    body: 'The IP identifies an interface. The mask determines its local subnet. With this /24 mask, 192.168.0 is the network portion and the last octet identifies a host. A gateway routes traffic to other networks. DHCP can supply configuration automatically; your photo shows it disabled.',
+    simple: 'IP: your house number. Mask: which neighborhood is local. Gateway: the exit toward other neighborhoods. This is an analogy, not a wiring diagram.',
+    take: 'A matching subnet helps local communication; it does not prove cables, ports, or software are working.',
+    demo: 'network',
+    photo: '10-1000066750.jpg',
+    tryControls: ['laptop-ip-select', 'network-result'],
+    questions: [
+      Q('l08q1', 'Which hypothetical laptop IP is on the same /24 subnet without duplicating the controller?', ['192.168.1.20', '192.168.0.10', '192.168.0.20'], 2, '192.168.0.20 shares the network portion and has a different host number. This assumes the address is otherwise unused.', ['The third octet differs under this /24 mask.', 'That duplicates the controller address.', '']),
+      Q('l08q2', 'What is the role of 192.168.0.1 in this photographed configuration?', ['It is the configured gateway', 'It is axis 1', 'It is always the computer’s address'], 0, 'It is listed as the gateway. The photo does not tell us the laptop’s own IP.', ['', 'Axes and network interfaces use different identifiers.', 'The computer’s address is not shown here.']),
+    ],
+  },
+  {
+    id: 'l09',
+    short: 'Other menu settings',
+    title: 'Read the label before changing the value.',
+    intro: 'Explore the remaining labels in your photographed main configuration menu.',
+    heading: 'Settings affect different behaviors',
+    body: 'Range settings concern endpoints. Velocity Limit is a motion-control setting; its exact implementation and units must be checked for this firmware. Force output to value is a position-command override, not a force measurement in newtons. PowerOn Default concerns startup behavior. Exact units, override release, and special values depend on the controller firmware.',
+    simple: 'Where to go, how quickly to get there, and what to do at startup are separate questions.',
+    take: 'A zero in a field does not automatically mean “disabled.” Verify the field’s documented meaning.',
+    demo: 'settings',
+    photo: '07-1000066747.jpg',
+    tryControls: ['setting-select', 'term-menu'],
+    questions: [
+      Q('l09q1', 'Does “Force output to value” mean “set mechanical force in newtons”?', ['Yes, that is what Force always means', 'No, it refers to overriding the output command', 'Yes, if the axis is enabled'], 1, 'Here “force” is a verb: impose a command value. It is not a physical-force unit.', ['Read the full menu action, not just one word.', '', 'Enabling an axis does not change the meaning of this label.']),
+      Q('l09q2', 'Which setting is most closely associated with startup behavior?', ['PowerOn Default', 'IP netmask', 'First Channel'], 0, 'The label refers to the default at power-on. Confirm the exact behavior for the team’s firmware.', ['', 'A netmask defines a network boundary.', 'First Channel identifies a starting command address.']),
+    ],
+  },
+  {
+    id: 'l10',
+    short: 'Workshop challenge',
+    title: 'Put the pieces together.',
+    intro: 'Walk through a simplified diagnosis: the target is halfway, but the reported position stays at zero.',
+    heading: 'Separate command from observation',
+    body: 'Start by identifying the intended axis and command. Then compare the requested value with feedback. A mismatch can have several causes: incorrect mapping, disabled output, missing power, a sensor issue, or a mechanical problem. These numbers alone do not establish which cause is responsible.',
+    simple: 'If your instruction and the result disagree, find where the chain stops matching. Do not assume the first setting you see is the cause.',
+    take: 'Understand the evidence before changing hardware settings. Real movement checks belong with your team’s trained lead.',
+    demo: 'challenge',
+    photo: null,
+    tryControls: ['clue-button'],
+    questions: [
+      Q('l10q1', 'Command is 128 but feedback stays at 0. What do you know?', ['The motor is definitely broken', 'The target and reported position disagree', 'The IP must be wrong'], 1, 'You know there is a mismatch. Several different faults or configuration issues could explain it.', ['A mismatch alone does not identify the failed component.', '', 'An IP problem is only one possible issue, not a proven diagnosis.']),
+      Q('l10q2', 'What is the most useful next step with your team lead?', ['Raise every gain to maximum', 'Copy another axis’s endpoints', 'Verify the intended axis, command path, and feedback together'], 2, 'Check the mapping and observations with the lead before making changes. Random tuning can hide the real issue.', ['Higher gain is not a universal repair.', 'Another axis may have different geometry and calibration.', '']),
+    ],
+  },
+]);
+
+// Menu-label explanations ported from the prototype's `settings` demo.
+export const SETTING_EXPLANATIONS = Object.freeze({
+  range: ['Where are the endpoints?', 'Connect the command’s lower and upper endpoints to the intended travel range.'],
+  velocity: ['A motion-control limit', 'Do not infer the algorithm or units from this label. A screenshot value such as 3.00 is not automatically cm/s; confirm it in the matching firmware documentation.'],
+  force: ['Impose a command value', 'An override command, not a mechanical-force measurement. Confirm the override behavior in the controller manual.'],
+  power: ['What happens at startup?', 'A power-on default affects initial behavior. Exact startup sequences and special values must be verified for the firmware.'],
+  reverse: ['Which direction is the output?', 'Output reversal changes output polarity or direction. It is not the same as reversing the show timeline. Its correct choice depends on the feedback and mechanism.'],
+  enable: ['May this axis operate?', 'An enabled axis is permitted to operate by this setting. This alone does not establish that power, feedback, and all other conditions are ready.'],
+  compliance: ['How does it respond to external force?', 'Compliance control can use additional force or pressure feedback. The menu label does not establish that your rig has those sensors fitted.'],
+  adl: ['A status message, not a diagnosis', 'Your photos display NO ADL FILE. Do not conclude from that message alone that the controller is broken or cannot receive live commands. Confirm the intended playback or live-control mode with your lead.'],
+});
+
+export const FLOW_PARTS = Object.freeze([
+  { label: 'PC•MACs / show', text: 'The show describes channel values over time.' },
+  { label: 'Controller / outputs', text: 'The controller receives commands and interfaces with output hardware.' },
+  { label: 'Actuator / movement', text: 'The actuator converts supplied energy into movement.' },
+]);
+
+export const CHALLENGE_CLUES = Object.freeze({
+  clue1: { label: 'Command path', text: 'Check with your lead that the intended card, axis, and command channel match. The wrong mapping can send a valid value to the wrong place.' },
+  clue2: { label: 'Feedback path', text: 'Check whether the reported measurement is valid. A zero reading can represent a real position or a feedback problem; the display alone does not distinguish them.' },
+});

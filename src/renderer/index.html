@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roseflow PC Mac Training</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.mjs"></script>
+</head>
+<body>
+  <header class="identity">
+    <div class="identity-name">
+      <strong>Roseflow PC Mac Training</strong>
+      <span>Independent training app, simulation only. Nothing here connects to a controller or sends a command.</span>
+    </div>
+    <nav class="tabs" aria-label="Trainer sections" id="tabs">
+      <button type="button" data-view="lessons" data-control="nav-tab" aria-pressed="true">Lessons</button>
+      <button type="button" data-view="practice" data-control="nav-tab" aria-pressed="false">Practice</button>
+      <button type="button" data-view="handbook" data-control="nav-tab" aria-pressed="false">Handbook</button>
+      <button type="button" data-view="progress" data-control="nav-tab" aria-pressed="false">Progress</button>
+    </nav>
+    <button type="button" id="panel-toggle" class="quiet" data-control="panel-toggle" aria-pressed="true">Hide panel</button>
+    <button type="button" id="help-current" class="quiet" data-control="help-button" title="Help for the focused control (F1)">Help ?</button>
+  </header>
+
+  <div id="persistence-notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+  <main class="shell" id="shell">
+    <aside id="trainer" class="trainer" aria-label="Trainer panel">
+      <section id="view-lessons" class="view"></section>
+      <section id="view-practice" class="view" hidden></section>
+      <section id="view-handbook" class="view" hidden></section>
+      <section id="view-progress" class="view" hidden></section>
+    </aside>
+
+    <section class="desk" aria-label="Training workspace">
+      <p class="desk-note">
+        Training workspace modeled on the PC•MACs OffLine Editing Window (manual pages 76–78) and the photographed Terminal - COM3 dialog.
+        The eight-second block timeline is a teaching simplification, not an exact PC•MACs editor.
+      </p>
+      <div class="desk-grid">
+        <div id="workspace" class="workspace"></div>
+        <div id="terminal" class="terminal"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="tooltip" role="tooltip" hidden></div>
+  <dialog id="help-dialog" aria-labelledby="help-title"></dialog>
+  <dialog id="photo-dialog" aria-label="Reference photo"></dialog>
+  <dialog id="start-dialog" aria-labelledby="start-title"></dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title"></dialog>
+  <dialog id="control-dialog" aria-labelledby="control-title"></dialog>
+</body>
+</html>

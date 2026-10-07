@@ -1,0 +1,12 @@
+node_modules/
+out/
+release/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+# Scratch user-data directories created by the smoke test
+.smoke-userdata/
