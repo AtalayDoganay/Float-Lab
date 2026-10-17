@@ -7,14 +7,12 @@ evidence, lists deliberate training adaptations, and states the gaps.
 
 Status words used below:
 
-None of the ten photos shows the PC•MACs main window with the terminal dialog
-closed. Behind the dialog only a time ruler (`0 min 04 sec … 24 sec`), dashed
-grid lines, and purple and red trace fragments are visible. The app therefore
-does **not** claim an exact reproduction of the main PC•MACs workspace. The
-timeline workspace follows the manual's description of the OffLine Editing
-Window and is labeled a simplification in the app. A readable full-window
-screenshot of PC•MACs with the show, channel list, and transport visible would
-let a later version compare element by element.
+- **manual**: shown in a screenshot or described in the PC•MACs manual.
+- **photo**: visible in the team's reference photos 01–10.
+- **adapted**: a deliberate training change, labelled in the app.
+- **assumed**: the trainer had to choose; no reference settles it.
+- **not simulated**: drawn as in the reference; using it explains that it
+  does nothing in the trainer.
 
 ## Version and sources (checked October 7, 2026)
 
