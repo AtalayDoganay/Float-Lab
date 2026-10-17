@@ -1,9 +1,12 @@
 // Local, versioned progress storage for the main process. One JSON file in the
 // app's user-data directory, written atomically (temp file + rename). Unreadable
 // or incompatible files are moved aside, never deleted, and the caller is told.
+// An older-schema file is migrated in memory on load; its original text is
+// copied once to progress.v<n>-backup.json before anything else happens, and
+// the file itself is only rewritten when the app next saves.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { validateProgress } from '../shared/progress-schema.mjs';
+import { validateProgress, migrateProgress } from '../shared/progress-schema.mjs';
 
 export const PROGRESS_FILE = 'progress.json';
 
@@ -21,6 +24,17 @@ export function createProgressStore({ dir, now = () => new Date() }) {
     return { ok: true, value: null, recovered: { reason, quarantinedPath } };
   }
 
+  async function backupOriginal(text, fromVersion) {
+    const backupPath = path.join(dir, `progress.v${fromVersion}-backup.json`);
+    try {
+      // 'wx' refuses to overwrite: the first backup is the one that survives.
+      await fs.writeFile(backupPath, text, { encoding: 'utf8', flag: 'wx' });
+    } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+    }
+    return backupPath;
+  }
+
   async function load() {
     let text;
     try {
@@ -35,9 +49,18 @@ export function createProgressStore({ dir, now = () => new Date() }) {
     } catch {
       return quarantine('invalid-json');
     }
-    const validated = validateProgress(parsed);
+    const migrated = migrateProgress(parsed);
+    if (!migrated.ok) return quarantine(migrated.error);
+    const validated = validateProgress(migrated.value);
     if (!validated.ok) return quarantine(validated.error);
-    return { ok: true, value: validated.value };
+    if (migrated.from === migrated.value.schemaVersion) return { ok: true, value: validated.value };
+    let backupPath;
+    try {
+      backupPath = await backupOriginal(text, migrated.from);
+    } catch (error) {
+      return { ok: false, error: `backup-failed ${describeError(error)}` };
+    }
+    return { ok: true, value: validated.value, migrated: { fromSchemaVersion: migrated.from, backupPath } };
   }
 
   async function save(doc) {

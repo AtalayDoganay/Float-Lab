@@ -3,15 +3,25 @@ import assert from 'node:assert/strict';
 import {
   percentOf,
   formatPercent,
-  blocksToIntervals,
-  playbackStep,
-  formatShowTime,
+  formatTime,
+  formatCursor,
+  parseTime,
+  intervalsOf,
+  digitalFromIntervals,
+  setDigitalRange,
+  setAnalogRange,
+  compareDigital,
+  encodeRuns,
+  decodeRuns,
+  defaultAnalogs,
   axisToDmx,
   classifyLaptopIp,
   approachStep,
   calibratedTarget,
-  DEFAULT_BLOCKS,
+  FRAME_COUNT,
+  LAST_FRAME,
 } from '../src/renderer/logic/simulation.mjs';
+import { computeOutputs, outputSource } from '../src/renderer/logic/outputs.mjs';
 
 test('command 128 is about 50.2 percent of the 8-bit range', () => {
   assert.ok(Math.abs(percentOf(128) - 50.196) < 0.001);
@@ -21,35 +31,71 @@ test('command 128 is about 50.2 percent of the 8-bit range', () => {
   assert.equal(formatPercent(255), '100.0%');
 });
 
-test('blocks 2 and 3 cover the intervals 2-3 and 3-4 seconds', () => {
-  const blocks = [false, false, true, true, false, false, false, false];
-  assert.deepEqual(blocksToIntervals(blocks), [
-    { start: 2, end: 3 },
-    { start: 3, end: 4 },
-  ]);
-  assert.deepEqual(blocksToIntervals(new Array(8).fill(false)), []);
-  assert.deepEqual(DEFAULT_BLOCKS, [false, false, true, true, false, false, false, false]);
+test('the training show is 8 seconds of 30 frames; times are hh:mm:ss.ff', () => {
+  assert.equal(FRAME_COUNT, 240);
+  assert.equal(formatTime(0), '00:00:00.00');
+  assert.equal(formatTime(60), '00:00:02.00');
+  assert.equal(formatTime(75), '00:00:02.15');
+  assert.equal(formatTime(LAST_FRAME), '00:00:07.29');
+  assert.equal(formatTime(30 * 3725), '01:02:05.00');
+  assert.equal(formatCursor(75), '00:02.15');
 });
 
-test('playback steps through eight one-second blocks then finishes', () => {
-  const blocks = DEFAULT_BLOCKS;
-  for (let t = 0; t < 8; t += 1) {
-    const step = playbackStep(t, blocks);
-    assert.equal(step.done, false);
-    assert.equal(step.index, t);
-    assert.equal(step.on, blocks[t]);
-    assert.equal(step.label, `${t}–${t + 1} s · ${blocks[t] ? 'ON' : 'OFF'}`);
-  }
-  assert.deepEqual(playbackStep(8, blocks), { done: true });
-  assert.deepEqual(playbackStep(9, blocks), { done: true });
+test('typed times parse to frames and out-of-show or malformed times are refused', () => {
+  assert.equal(parseTime('00:00:02.15'), 75);
+  assert.equal(parseTime('02.15'), 75);
+  assert.equal(parseTime('5'), 150);
+  assert.equal(parseTime('00:00:08.00'), 240);
+  assert.equal(parseTime('00:00:08.01'), null);
+  assert.equal(parseTime('00:00:02.30'), null, 'frames run 0-29');
+  assert.equal(parseTime('two seconds'), null);
 });
 
-test('show time is formatted as hours:minutes:seconds.frames at 30 fps', () => {
-  assert.equal(formatShowTime(0), '00:00:00.00');
-  assert.equal(formatShowTime(2), '00:00:02.00');
-  assert.equal(formatShowTime(2.5), '00:00:02.15');
-  assert.equal(formatShowTime(65), '00:01:05.00');
-  assert.equal(formatShowTime(3725), '01:02:05.00');
+test('digital show data round-trips through ON spans in frames', () => {
+  const frames = digitalFromIntervals([[60, 120], [150, 180]]);
+  assert.equal(frames.length, FRAME_COUNT);
+  assert.equal(frames[59], false);
+  assert.equal(frames[60], true);
+  assert.equal(frames[119], true);
+  assert.equal(frames[120], false);
+  assert.deepEqual(intervalsOf(frames), [[60, 120], [150, 180]]);
+  const on = setDigitalRange(frames, 120, 150, true);
+  assert.deepEqual(intervalsOf(on), [[60, 180]], 'Set Digitals On joins the spans');
+  assert.deepEqual(intervalsOf(setDigitalRange(on, 0, 240, false)), []);
+});
+
+test('a drawn digital is compared with the expected seconds, naming the first wrong stretch', () => {
+  const exact = digitalFromIntervals([[60, 120]]);
+  assert.equal(compareDigital(exact, [[2, 4]]).ok, true);
+  assert.equal(compareDigital(digitalFromIntervals([[62, 118]]), [[2, 4]]).ok, true, 'hand-drawn edges two frames off pass');
+  const extra = compareDigital(digitalFromIntervals([[30, 120]]), [[2, 4]]);
+  assert.deepEqual([extra.ok, extra.kind, extra.from], [false, 'extra', 30]);
+  const missing = compareDigital(digitalFromIntervals([[60, 90]]), [[2, 4]]);
+  assert.deepEqual([missing.ok, missing.kind], [false, 'missing']);
+});
+
+test('analog show data: Set Analogs to a Value and the compact saved form', () => {
+  const values = defaultAnalogs()[0];
+  assert.equal(values.length, FRAME_COUNT);
+  const set = setAnalogRange(values, 30, 90, 255);
+  assert.equal(set[29], values[29]);
+  assert.ok(set.slice(30, 90).every((v) => v === 255));
+  assert.deepEqual(decodeRuns(encodeRuns(set)), set);
+});
+
+test('outputs follow the show while playing, the Soft Console in Manual mode, and hold otherwise', () => {
+  const sim = {
+    mode: 'stop', frame: 75, checks: { manual: false }, bump: null,
+    console: [10, 20, 30, 40], consoleDigital: { 'light-1': true },
+    analogs: defaultAnalogs(), lights: { 'light-1': digitalFromIntervals([[60, 120]]), 'light-2': digitalFromIntervals([]) },
+  };
+  assert.equal(outputSource(sim), 'hold');
+  assert.equal(computeOutputs(sim).lights['light-1'], true, 'holding frame 75, inside 2-4 s');
+  assert.equal(computeOutputs({ ...sim, mode: 'play', frame: 130 }).lights['light-1'], false);
+  const manual = computeOutputs({ ...sim, checks: { manual: true } });
+  assert.equal(manual.source, 'manual');
+  assert.deepEqual(manual.analogs, [10, 20, 30, 40]);
+  assert.equal(computeOutputs({ ...sim, checks: { manual: true }, bump: 2 }).analogs[2], 255, 'BUMP is 100% while held');
 });
 
 test('axes 0-3 map to displayed DMX addresses 6-9 as photographed', () => {

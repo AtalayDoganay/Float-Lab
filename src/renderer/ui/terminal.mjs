@@ -1,7 +1,11 @@
 // The photographed "Terminal - COM3" dialog (GilderTerm) with the Br-EFB v1.98
-// configuration menus transcribed from the photos. Menu lines are clickable;
-// typed keys go through the same simulated logic.
+// configuration menus transcribed from the photos. Window, toolbar, and text
+// area follow photos 06 and 07; the toolbar's underlined access letters follow
+// the GilderTerm capture in the PC•MACs manual, p. 209. Menu lines are
+// clickable and the text area takes typed keys, as a terminal does. The key
+// box and the notes below the window are the trainer's, not GilderTerm's.
 import { el, replace, helpButton } from './dom.mjs';
+import { win, accessLabel } from './win.mjs';
 import {
   BREFB_HEADER, BREFB_MAIN_SNAPSHOT, BREFB_FEEDBACK_SNAPSHOT, BREFB_NETWORK_SNAPSHOT, PROMPTS,
 } from '../content/references.mjs';
@@ -69,9 +73,11 @@ function composeTwoColumn(screen, t) {
 
 function footerButtons(footer) {
   const parts = footer.split(', ');
-  return el('div', { class: 'term-prompt' }, ...parts.map((part, i) => el('button', {
-    type: 'button', class: 'term-line', style: 'display:inline', 'data-key': part.charAt(0), text: `${part}${i < parts.length - 1 ? ', ' : ''}`,
-  })));
+  // The separators sit outside the buttons so their spaces are kept, as in photos 06-07.
+  return el('div', { class: 'term-prompt' }, ...parts.flatMap((part, i) => [
+    el('button', { type: 'button', class: 'term-line', style: 'display:inline', 'data-key': part.charAt(0), text: part }),
+    i < parts.length - 1 ? ', ' : null,
+  ]));
 }
 
 function networkLines() {
@@ -88,9 +94,10 @@ function networkLines() {
 
 export function mountTerminal(container, { dispatch }) {
   const refs = {};
-  refs.configBtn = el('button', { type: 'button', class: 'winbtn', 'data-control': 'term-config-done', text: 'Config Done', onclick: () => dispatch({ type: 'term-button', name: 'config' }) });
-  refs.controlBtn = el('button', { type: 'button', class: 'winbtn', 'data-control': 'term-control', text: 'Control', onclick: () => dispatch({ type: 'term-button', name: 'control' }) });
-  refs.screen = el('div', { class: 'term-screen', 'data-control': 'term-menu', tabindex: '0', 'aria-label': 'Simulated controller menu. Click a line or type its key below.' });
+  const btn = (control, label, letter, onclick, extra = {}) => el('button', { type: 'button', class: 'w7btn term-btn', 'data-control': control, onclick, ...extra }, ...accessLabel(label, letter));
+  refs.configBtn = btn('term-config-done', 'Config Done', 7, () => dispatch({ type: 'term-button', name: 'config' }));
+  refs.controlBtn = btn('term-control', 'Control', 2, () => dispatch({ type: 'term-button', name: 'control' }));
+  refs.screen = el('div', { class: 'term-screen', 'data-control': 'term-menu', tabindex: '0', 'aria-label': 'Simulated controller menu. Click a line or type its key.' });
   refs.screen.addEventListener('click', (e) => {
     const line = e.target instanceof Element ? e.target.closest('[data-key]') : null;
     if (line && line.dataset.key) dispatch({ type: 'term-key', key: line.dataset.key });
@@ -107,29 +114,37 @@ export function mountTerminal(container, { dispatch }) {
   refs.promptLabel = el('span', { text: 'Type a key:' });
   refs.note = el('div', { class: 'term-note', role: 'status', 'aria-live': 'polite' });
 
+  const { root, body } = win({ title: 'Terminal - COM3', part: 'terminal', cls: 'term-win' });
+  body.append(
+    el('div', { class: 'term-toolbar', 'data-part': 'term-toolbar' },
+      el('label', { class: 'term-card' }, el('span', { text: 'Card' }), el('input', { type: 'text', class: 'field', value: '1', readonly: true, 'data-control': 'term-card', 'aria-label': 'Card address (photographed value 1)' })),
+      el('label', { class: 'term-delay' }, el('span', { text: 'Character delay:' }), el('select', { class: 'w7select', disabled: true, 'data-control': 'term-delay', 'aria-label': 'Character delay' }, el('option', { text: 'None' }))),
+      btn('term-clear', 'Clear Screen', 1, () => dispatch({ type: 'term-button', name: 'clear' })),
+      btn('term-status', 'Status', 0, null, { disabled: true, 'aria-disabled': 'true' }),
+      refs.configBtn,
+      refs.controlBtn),
+    el('div', { class: 'term-frame' }, refs.screen));
   replace(container,
-    el('div', { class: 'term-title' }, el('span', { class: 'icon' }), el('span', { text: 'Terminal - COM3' }), el('span', { class: 'spacer' }),
-      el('span', { class: 'winctl', 'aria-hidden': 'true' }, el('span', { text: '—' }), el('span', { text: '☐' }), el('span', { class: 'x', text: '✕' }))),
-    el('div', { class: 'term-toolbar' },
-      el('label', {}, 'Card ', el('input', { type: 'text', value: '1', readonly: true, 'data-control': 'term-card', 'aria-label': 'Card address (photographed value 1)' })), helpButton('term-card'),
-      el('label', {}, 'Character delay: ', el('select', { disabled: true, 'data-control': 'term-delay', 'aria-label': 'Character delay' }, el('option', { text: 'None' }))), helpButton('term-delay'),
-      el('button', { type: 'button', class: 'winbtn', 'data-control': 'term-clear', text: 'Clear Screen', onclick: () => dispatch({ type: 'term-button', name: 'clear' }) }), helpButton('term-clear'),
-      el('button', { type: 'button', class: 'winbtn', 'data-control': 'term-status', text: 'Status', disabled: true, 'aria-disabled': 'true' }), helpButton('term-status'),
-      refs.configBtn, helpButton('term-config-done'),
-      refs.controlBtn, helpButton('term-control')),
-    refs.screen,
-    el('div', { class: 'term-input' }, refs.promptLabel, refs.input, el('button', { type: 'button', class: 'winbtn', text: 'Send', onclick: send }), helpButton('term-input'), helpButton('term-menu')),
-    refs.note,
-    el('div', { class: 'term-evidence', text: 'Dialog and menu text reproduced from photos 01–10 (firmware 1.98). Toolbar meanings from the PC•MACs manual, pages 209–211. Only photographed prompts are simulated; nothing is sent anywhere.' }));
+    root,
+    el('div', { class: 'term-aside' },
+      el('div', { class: 'term-input' }, refs.promptLabel, refs.input, el('button', { type: 'button', class: 'btn btn-small', text: 'Send', onclick: send }), helpButton('term-input'), helpButton('term-menu')),
+      refs.note,
+      el('div', { class: 'term-evidence', text: 'Trainer: the dialog and menu text are reproduced from photos 01–10 (firmware 1.98); the toolbar meanings are from the PC•MACs manual, pp. 209–211. Only photographed prompts are simulated, and nothing is sent anywhere.' })));
 
   function lineNode(line) {
     if (line.key) return el('button', { type: 'button', class: 'term-line', 'data-key': line.key, text: line.text });
     return el('div', { class: 'term-line plain', text: line.text });
   }
 
-  function update(state) {
+  let shownTerminal = null;
+  function update(state, revealed = []) {
     const t = state.terminal;
-    refs.configBtn.textContent = t.configMode ? 'Config Done' : 'Configure';
+    container.querySelector('[data-part="term-toolbar"]').hidden = !revealed.includes('term-toolbar') && !state.sim.windows.terminal;
+    // The terminal state is replaced on every change, so an unchanged object
+    // means nothing to redraw. Rebuilding on playback ticks would eat clicks.
+    if (t === shownTerminal) return;
+    shownTerminal = t;
+    replace(refs.configBtn, ...(t.configMode ? accessLabel('Config Done', 7) : accessLabel('Configure', null)));
     refs.configBtn.classList.toggle('active', !t.configMode);
     refs.controlBtn.classList.toggle('active', t.controlOpen);
     refs.note.textContent = t.note;

@@ -4,6 +4,7 @@
 //
 //   npm run smoke
 //   node scripts/smoke.mjs --exe "out/Roseflow PC Mac Training-win32-x64/RoseflowPCMacTraining.exe"
+//   node scripts/smoke.mjs --shots <dir>
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -19,6 +20,19 @@ const shotsDir = shotsIndex >= 0 ? path.resolve(args[shotsIndex + 1]) : null;
 
 const userData = path.join(repoRoot, '.smoke-userdata', `run-${Date.now()}`);
 await fs.mkdir(userData, { recursive: true });
+
+// A representative version-1 progress file (the schema the first Windows build
+// wrote): one classic question answered, two exercise steps finished, and the
+// learner last on the handbook tab with axis 3 selected.
+const LEGACY_V1 = {
+  schemaVersion: 1,
+  app: 'roseflow-pc-mac-training',
+  savedAt: '2026-10-07T16:47:52.826Z',
+  location: { view: 'handbook', lessonId: 'l03', questionIndex: 1, exerciseId: 'schedule-light', stepIndex: 2 },
+  course: { completedLessons: [], missedLessons: ['l03'], answered: ['l03q1'] },
+  guided: { completedSteps: ['schedule-light:sl-channel', 'schedule-light:sl-blocks'], completedExercises: [] },
+  settings: { channelId: 'light-1', blocks: [false, false, true, true, false, false, false, false], axis: 3, command: 128, laptopIp: '192.168.0.20' },
+};
 
 function launch(scenario) {
   return new Promise((resolve) => {
@@ -36,7 +50,7 @@ function launch(scenario) {
     let stderr = '';
     child.stdout.on('data', (d) => { stdout += d; });
     child.stderr.on('data', (d) => { stderr += d; });
-    const timer = setTimeout(() => child.kill(), 60000);
+    const timer = setTimeout(() => child.kill(), 90000);
     child.on('close', (code) => {
       clearTimeout(timer);
       const line = stdout.split(/\r?\n/).find((l) => l.startsWith('SMOKE_RESULT '));
@@ -45,11 +59,33 @@ function launch(scenario) {
   });
 }
 
-const sequence = shotsDir ? ['shots'] : ['first', 'resume', 'malformed', 'savefail'];
+// A representative version-2 progress file (the guided-learning build): in the
+// timeline lesson at step 3 with blocks 2, 3, and 5 ON and axis 2 at 100.
+const LEGACY_V2 = {
+  schemaVersion: 2,
+  app: 'roseflow-pc-mac-training',
+  savedAt: '2026-10-07T19:12:00.000Z',
+  location: { view: 'lesson', level: 'basic', lessonId: 'b-timeline-graph', stepIndex: 2 },
+  learning: { completedSteps: ['b-system:show', 'b-timeline-graph:seconds', 'b-timeline-graph:block-states', 'b-timeline-graph:retired-step'], completedLessons: ['b-system'], missedLessons: [] },
+  course: { completedLessons: ['l01'], missedLessons: [], answered: ['l01q1', 'l01q2'] },
+  guided: { completedSteps: [], completedExercises: [] },
+  settings: { channelId: 'light-1', blocks: [false, false, true, true, false, true, false, false], axis: 2, command: 100, laptopIp: '192.168.0.20' },
+  migrated: null,
+};
+
+const sequence = shotsDir ? ['shots'] : ['first', 'resume', 'malformed', 'savefail', 'legacy', 'legacy2', 'practice'];
 const summary = [];
 for (const scenario of sequence) {
   if (scenario === 'malformed') {
     await fs.writeFile(path.join(userData, 'progress.json'), '{ definitely not json', 'utf8');
+  }
+  if (scenario === 'legacy') {
+    await fs.rm(path.join(userData, 'progress.v1-backup.json'), { force: true });
+    await fs.writeFile(path.join(userData, 'progress.json'), JSON.stringify(LEGACY_V1, null, 2), 'utf8');
+  }
+  if (scenario === 'legacy2') {
+    await fs.rm(path.join(userData, 'progress.v2-backup.json'), { force: true });
+    await fs.writeFile(path.join(userData, 'progress.json'), JSON.stringify(LEGACY_V2, null, 2), 'utf8');
   }
   const result = await launch(scenario);
   summary.push(result);

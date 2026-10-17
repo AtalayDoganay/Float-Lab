@@ -5,6 +5,7 @@ import { CONTROLS, EVIDENCE_LEVELS } from '../src/renderer/content/controls.mjs'
 import { EXERCISES } from '../src/renderer/content/exercises.mjs';
 import { HANDBOOK_ENTRIES, ALIAS_GROUPS } from '../src/renderer/content/handbook.mjs';
 import { REFERENCE_IMAGES, MANUAL_CITATIONS } from '../src/renderer/content/references.mjs';
+import { LESSONS_BY_ID } from '../src/renderer/content/levels.mjs';
 
 const nonEmpty = (value) => typeof value === 'string' && value.trim().length > 0;
 
@@ -72,7 +73,7 @@ test('three guided exercises target existing controls and carry full step text',
   }
 });
 
-test('the handbook covers every control, lesson, exercise, the core concepts, and Rose Float examples', () => {
+test('the handbook covers every control, guided lesson, classic topic, assignment, the core concepts, and Rose Float examples', () => {
   const byId = new Map(HANDBOOK_ENTRIES.map((e) => [e.id, e]));
   assert.equal(byId.size, HANDBOOK_ENTRIES.length, 'handbook ids are unique');
   for (const id of Object.keys(CONTROLS)) {
@@ -80,11 +81,22 @@ test('the handbook covers every control, lesson, exercise, the core concepts, an
     assert.ok(entry, `missing handbook entry for control ${id}`);
     assert.equal(entry.type, 'control');
   }
+  for (const lesson of Object.values(LESSONS_BY_ID)) {
+    const entry = byId.get(`lesson:${lesson.id}`);
+    assert.equal(entry?.type, 'lesson', `missing guided lesson entry ${lesson.id}`);
+    assert.equal(entry.lessonId, lesson.id);
+    assert.equal(entry.sections.length, lesson.steps.length, 'one handbook section per step');
+  }
   for (const lesson of LESSONS) {
-    assert.equal(byId.get(`lesson:${lesson.id}`)?.type, 'lesson');
+    assert.equal(byId.get(`topic:${lesson.id}`)?.type, 'topic', `classic lesson text ${lesson.id} is kept as a topic note`);
   }
   for (const exercise of EXERCISES) {
-    assert.equal(byId.get(`exercise:${exercise.id}`)?.type, 'exercise');
+    const entry = byId.get(`exercise:${exercise.id}`);
+    assert.equal(entry?.type, 'exercise');
+    assert.ok(LESSONS_BY_ID[entry.lessonId], `assignment ${exercise.id} points at a real guided lesson`);
+  }
+  for (const entry of HANDBOOK_ENTRIES) {
+    for (const rel of entry.related) assert.ok(byId.has(rel), `${entry.id} relates to unknown entry ${rel}`);
   }
   for (const concept of [
     'concept:pcmacs', 'concept:channel', 'concept:0-255', 'concept:card-axis-channel',

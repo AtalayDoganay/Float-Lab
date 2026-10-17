@@ -128,13 +128,33 @@ export const MANUAL_CITATIONS = Object.freeze({
   },
   'pcmacs-offline-window': {
     manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
-    pages: '75–78, OffLine Editing Window QuickStart',
-    claim: 'Analog (0–100%) functions are displayed in the upper pane and digital (on/off) functions in the lower pane. Unprogrammed digitals appear as light blue lines; ON time is drawn in black. Time is displayed along the top with major markers at each second at that zoom level. Show times appear at the lower left, center and right. Transport markers are vertical lines: green playback start, blue punch in, orange punch out, red playback end. Channel names are listed at the left of each pane.',
+    pages: '75–78, OffLine Editing Window QuickStart (screenshot p. 76)',
+    claim: 'The window is titled “Edit View”. Analog (0–100%) functions are displayed in the upper pane and digital (on/off) functions in the lower pane. The text says unprogrammed digitals appear as light blue lines; the screenshot’s pixels are grey. ON time is drawn in black, thicker where selected. Time is displayed along the top with major markers at each second at that zoom level. Show times appear at the lower left, center and right, with the cursor time and value and the channel under the cursor. Transport markers are vertical lines: green playback start, blue punch in, orange punch out, red playback end. Channel names are listed at the left of each pane; a selected stretch of time has a yellow background.',
+  },
+  'pcmacs-selection': {
+    manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
+    pages: '79–85, shortcut menu, selecting channels, and right-mouse drawing',
+    claim: 'LeftClick on a channel and slide to select it for a stretch of time; slide on empty space to select every displayed channel; <shift>+LeftClick adds or removes a channel or extends the time. The selected times can be typed into the fields at the bottom. RightClick and slide on a digital draws it (from an OFF point) or undraws it (from an ON point). RightClick on empty space opens a shortcut menu with Set Start Here, Set Stop Here, Loop, Play Selection, Loop Selection, and Set to Full Show. Double-clicking empty space sets the playback start time.',
+  },
+  'pcmacs-edit-menu': {
+    manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
+    pages: '133 (menu screenshot) and 176–178, Set Digital Off / On, Set Analogs to a Value',
+    claim: 'Set Digital Off (Ctrl+0) and Set Digital On (Ctrl+1) force the selected digital channels off or on through the selected time; Set Analogs to a Value (Ctrl+2) opens “Set to value (0 - 255):” and sets the selected analogs, in decimal, hexadecimal, or percentage. Each is only available when channels are selected for a non-zero stretch of time.',
   },
   'pcmacs-main-control': {
     manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
-    pages: '201–203, RealTime menu (section titles read; body text not reviewed)',
-    claim: 'The Main Control Window provides Play [F1], Record, Rehearsal, Stop [space bar], Pause/Continue [F2], and OffLine [F8] buttons, plus Start Time and Stop Time sliders (page 207).',
+    pages: '201–206, RealTime menu, Show Main Control Window (screenshot p. 201)',
+    claim: 'The Control Window has Play [F1], Record, Rehearse, Stop [space bar], Pause/Continue [F2], and OffLine [F8] buttons; the show time; the Auto-Punch, Manual [F3], Ease-In, Audio Cue, Loop, and Auto-Inbetweening checkboxes; Select Sequencer, Load Preset (Shift to Save), and Skew; and Start, Stop, Punch In, Punch Out, and Audio Cue time sliders. Play plays between the Start and Stop times; Loop starts again at the Start time; Manual sends the console inputs to the outputs while idle.',
+  },
+  'pcmacs-soft-console': {
+    manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
+    pages: '115–118, RealTime Programming QuickStart (screenshot p. 116)',
+    claim: 'The Soft Console has analog sliders at the top, each with Rev and Punch Out checkboxes, an assignment, a value, and a BUMP button that jumps to 100% while held, and digital buttons at the bottom. With Manual mode on, moving the sliders and pressing the buttons is reflected in the outputs.',
+  },
+  'pcmacs-menus': {
+    manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
+    pages: '76–77 and 133–134, menu bar and Menus Overview',
+    claim: 'All commands are in the pulldown menus File, Edit, RealTime, Offline, Channels, Preferences, and Help. While the OffLine Editing Window is active, Time Out, Time In, Values Out, and Values In appear on the menu bar and zoom the window.',
   },
   'pcmacs-frames': {
     manual: 'PC•MACs manual', edition: PCMACS_EDITION, url: PCMACS_URL, status: 'read-locally',
@@ -183,8 +203,8 @@ export const MANUAL_CITATIONS = Object.freeze({
   },
   'brefb-velocity-limit': {
     manual: 'Br-EFB manual', edition: BREFB_EDITION, url: BREFB_URL, status: 'read-locally',
-    pages: 'none: the text contains no “Velocity Limit” entry',
-    claim: 'The 2018 manual does not document the photographed firmware 1.98 “Set Velocity Limit” field. Its units and algorithm remain unresolved; a firmware-matched document would establish them.',
+    pages: 'none: the text contains no “Velocity Limit” entry; p. 100 describes “5) limit valve voltage”',
+    claim: 'The 2018 manual does not document the photographed firmware 1.98 “Set Velocity Limit” field. Its PID menu has “5) limit valve voltage” (±10 V by default; lowering it to ±5 V halves an actuator’s top speed), but whether the two are the same setting is not established. Units and algorithm remain unresolved; a firmware-matched document would establish them.',
   },
   'brefb-actuators': {
     manual: 'Br-EFB manual', edition: BREFB_EDITION, url: BREFB_URL, status: 'read-locally',

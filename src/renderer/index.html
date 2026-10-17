@@ -14,43 +14,31 @@
       <strong>Roseflow PC Mac Training</strong>
       <span>Independent training app, simulation only. Nothing here connects to a controller or sends a command.</span>
     </div>
-    <nav class="tabs" aria-label="Trainer sections" id="tabs">
-      <button type="button" data-view="lessons" data-control="nav-tab" aria-pressed="true">Lessons</button>
-      <button type="button" data-view="practice" data-control="nav-tab" aria-pressed="false">Practice</button>
-      <button type="button" data-view="handbook" data-control="nav-tab" aria-pressed="false">Handbook</button>
-      <button type="button" data-view="progress" data-control="nav-tab" aria-pressed="false">Progress</button>
+    <nav class="topnav" aria-label="App sections" id="topnav">
+      <button type="button" id="nav-home" data-control="nav-home">Home</button>
+      <button type="button" id="handbook-toggle" data-control="handbook-toggle" aria-pressed="false">Handbook</button>
+      <button type="button" id="nav-progress" data-control="nav-progress">Progress</button>
+      <button type="button" id="help-current" data-control="help-button" aria-pressed="false" title="Then click any control to explain it (F1 explains the focused control)">Help ?</button>
     </nav>
-    <button type="button" id="panel-toggle" class="quiet" data-control="panel-toggle" aria-pressed="true">Hide panel</button>
-    <button type="button" id="help-current" class="quiet" data-control="help-button" title="Help for the focused control (F1)">Help ?</button>
   </header>
 
   <div id="persistence-notice" class="notice" role="status" aria-live="polite" hidden></div>
 
   <main class="shell" id="shell">
-    <aside id="trainer" class="trainer" aria-label="Trainer panel">
-      <section id="view-lessons" class="view"></section>
-      <section id="view-practice" class="view" hidden></section>
-      <section id="view-handbook" class="view" hidden></section>
-      <section id="view-progress" class="view" hidden></section>
-    </aside>
-
-    <section class="desk" aria-label="Training workspace">
-      <p class="desk-note">
-        Training workspace modeled on the PC•MACs OffLine Editing Window (manual pages 76–78) and the photographed Terminal - COM3 dialog.
-        The eight-second block timeline is a teaching simplification, not an exact PC•MACs editor.
-      </p>
-      <div class="desk-grid">
-        <div id="workspace" class="workspace"></div>
-        <div id="terminal" class="terminal"></div>
-      </div>
+    <section id="stage" class="stage" aria-label="Start"></section>
+    <aside id="panel" class="panel" aria-label="Lesson panel" hidden></aside>
+    <section id="desk" class="desk" aria-label="Recreated PC•MACs windows and the simulated float" hidden>
+      <div id="pcmacs" class="pcmacs"></div>
+      <div id="float"></div>
     </section>
+    <aside id="handbook" class="handbook" aria-label="Handbook" hidden></aside>
   </main>
 
   <div id="tooltip" role="tooltip" hidden></div>
   <dialog id="help-dialog" aria-labelledby="help-title"></dialog>
   <dialog id="photo-dialog" aria-label="Reference photo"></dialog>
-  <dialog id="start-dialog" aria-labelledby="start-title"></dialog>
   <dialog id="confirm-dialog" aria-labelledby="confirm-title"></dialog>
   <dialog id="control-dialog" aria-labelledby="control-title"></dialog>
+  <dialog id="value-dialog" class="w8-dialog" aria-labelledby="value-title"></dialog>
 </body>
 </html>

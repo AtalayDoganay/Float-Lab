@@ -1,18 +1,21 @@
-// Handbook panel: search box, results with excerpts, entry view with sections,
-// related links, reference photos, and manual citations.
+// Handbook drawer: search box, results with excerpts, entry view with sections,
+// related links, reference photos, and manual citations. Opens beside the
+// lesson and closes without touching the step or the workspace.
 import { el, replace, helpButton, evidenceChip } from './dom.mjs';
 import { HANDBOOK_ENTRIES, HANDBOOK_BY_ID } from '../content/handbook.mjs';
 import { MANUAL_CITATIONS, REFERENCE_IMAGES, IMAGE_DIR } from '../content/references.mjs';
 
-const TYPE_LABEL = { concept: 'Concept', example: 'Rose Float example', control: 'Control', lesson: 'Lesson', exercise: 'Guided practice' };
-const TYPE_ORDER = ['concept', 'example', 'control', 'lesson', 'exercise'];
+const TYPE_LABEL = { concept: 'Concept', example: 'Rose Float example', control: 'Control', lesson: 'Lesson', topic: 'Topic note', exercise: 'Assignment' };
+const TYPE_ORDER = ['concept', 'example', 'control', 'lesson', 'topic', 'exercise'];
 
 export function mountHandbook(container, { dispatch }) {
   const input = el('input', { type: 'search', id: 'handbook-search', 'data-control': 'handbook-search', placeholder: 'Search, for example netmask, DMX, velocity limit', 'aria-label': 'Search the handbook', oninput: (e) => dispatch({ type: 'search', query: e.target.value }) });
   const status = el('p', { id: 'handbook-status', class: 'muted', role: 'status', 'aria-live': 'polite' });
   const body = el('div', {});
   replace(container,
-    el('div', { class: 'with-help' }, el('h2', { text: 'Handbook' }), helpButton('handbook-search')),
+    el('div', { class: 'head' },
+      el('div', { class: 'with-help' }, el('h2', { text: 'Handbook' }), helpButton('handbook-search')),
+      el('button', { type: 'button', class: 'btn btn-small', id: 'handbook-close', text: 'Close', onclick: () => dispatch({ type: 'handbook-close' }) })),
     el('div', { class: 'search-row' }, input),
     status, body);
 
@@ -26,19 +29,18 @@ export function mountHandbook(container, { dispatch }) {
     const c = MANUAL_CITATIONS[key];
     if (!c) return null;
     return el('p', { class: 'cite' }, el('strong', { text: `${c.manual}, ${c.edition}, pages ${c.pages}` }), ` (${c.status === 'read-locally' ? 'read locally for this app' : 'not read'}). ${c.claim} `,
-      el('button', { type: 'button', class: 'btn', style: 'padding:2px 8px;font-size:12.5px', text: 'Open PDF in your browser', onclick: () => dispatch({ type: 'open-link', url: c.url }) }));
+      el('button', { type: 'button', class: 'btn btn-small', text: 'Open PDF in your browser', onclick: () => dispatch({ type: 'open-link', url: c.url }) }));
   }
 
   function entryView(entry) {
     const related = (entry.related || []).map((id) => HANDBOOK_BY_ID.get(id)).filter(Boolean);
     return el('div', { class: 'entry' },
-      el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn', 'data-fid': 'hb-back', text: 'Back to the list', onclick: () => dispatch({ type: 'open-entry', id: null }) })),
+      el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn btn-small', 'data-fid': 'hb-back', text: 'Back to the list', onclick: () => dispatch({ type: 'open-entry', id: null }) })),
       el('p', { class: 'muted', text: TYPE_LABEL[entry.type] }),
       el('h2', { text: entry.title }),
       el('p', {}, evidenceChip(entry.evidence)),
       entry.sections ? entry.sections.map((s) => el('section', {}, el('h4', { text: s.label }), el('p', { text: s.text }))) : el('p', { text: entry.body }),
-      entry.type === 'lesson' ? el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn btn-primary', text: 'Open this lesson', onclick: () => dispatch({ type: 'open-lesson-by-id', id: entry.lessonId }) })) : null,
-      entry.type === 'exercise' ? el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn btn-primary', text: 'Start this exercise', onclick: () => dispatch({ type: 'start-exercise', id: entry.exerciseId, switchView: true }) })) : null,
+      entry.lessonId ? el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn btn-primary', text: 'Start this lesson', onclick: () => dispatch({ type: 'start-lesson', id: entry.lessonId }) })) : null,
       entry.type === 'control' ? el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn', text: 'Show me this control', onclick: () => dispatch({ type: 'highlight', controls: [entry.controlId] }) })) : null,
       related.length ? el('h4', { text: 'Related' }) : null,
       related.length ? el('div', { class: 'related' }, ...related.map((r) => el('button', { type: 'button', text: r.title, onclick: () => dispatch({ type: 'open-entry', id: r.id }) }))) : null,

@@ -1,83 +1,77 @@
 // Three guided exercises. Each step names the control it highlights, explains
 // why it matters, and validates the learner's action against the simulation
-// state. Messages are specific about what was done and what to change.
-import { blocksToIntervals, classifyLaptopIp, formatPercent, axisToDmx, DIGITAL_CHANNELS } from '../logic/simulation.mjs';
+// state. Messages are specific about what was done and what to change. Step
+// ids are stable: progress saved by earlier versions still counts.
+import { classifyLaptopIp, formatPercent, axisToDmx, channelName, compareDigital, formatTime } from '../logic/simulation.mjs';
 
-const EXPECTED_BLOCKS = [false, false, true, true, false, false, false, false];
-
-const channelName = (id) => DIGITAL_CHANNELS.find((c) => c.id === id)?.name ?? id;
-
-function checkBlocks(blocks) {
-  for (let i = 0; i < EXPECTED_BLOCKS.length; i += 1) {
-    if (blocks[i] && !EXPECTED_BLOCKS[i]) {
-      return { ok: false, message: `Block ${i} is ON. That would switch the light on during seconds ${i}–${i + 1}. Turn it off: only blocks 2 and 3 should be ON.` };
-    }
-    if (!blocks[i] && EXPECTED_BLOCKS[i]) {
-      return { ok: false, message: `Block ${i} is OFF, but it needs to be ON to cover seconds ${i}–${i + 1}. Turn it on so blocks 2 and 3 are both ON.` };
-    }
-  }
-  const intervals = blocksToIntervals(blocks).map((iv) => `${iv.start}–${iv.end} s`).join(' and ');
-  return { ok: true, message: `Exactly right. Block 2 covers 2–3 seconds and block 3 covers 3–4 seconds, so the light is commanded ON for ${intervals}: from second 2 to second 4.` };
+// Light 1 ON from 2 s to 4 s and OFF everywhere else.
+function checkLight1(lights) {
+  const r = compareDigital(lights['light-1'], [[2, 4]]);
+  if (r.ok) return { ok: true, message: 'Exactly right. Light 1 is drawn ON from 00:00:02.00 to 00:00:04.00, sixty frames at 30 frames per second, and OFF everywhere else.' };
+  const span = `${formatTime(r.from)} to ${formatTime(r.to)}`;
+  return r.kind === 'extra'
+    ? { ok: false, message: `Light 1 is ON from ${span}, outside 2–4 s. Select that stretch on the Light 1 row and choose Edit ▸ Set Digitals Off (Ctrl+0).` }
+    : { ok: false, message: `Light 1 is still OFF from ${span}, inside 2–4 s. Select 00:00:02.00 to 00:00:04.00 on the Light 1 row and choose Edit ▸ Set Digitals On (Ctrl+1).` };
 }
 
 export const EXERCISES = Object.freeze([
   {
     id: 'schedule-light',
     title: 'Schedule a light',
-    goal: 'Select a simulated digital channel, enable only blocks 2 and 3 in an eight-second sequence, and play it.',
+    goal: 'Select a simulated digital channel on the Edit View, draw it ON from second 2 to second 4 of the eight-second show, and play it from the Control Window.',
     lesson: 'l07',
     steps: [
       {
         id: 'sl-channel',
         target: 'channel-select',
         title: 'Select the channel “Light 1”',
-        why: 'A channel carries one control value. Choosing the row first makes sure the ON/OFF pattern you draw belongs to the light you mean.',
-        instruction: 'In the digital pane, click the row named Light 1.',
-        success: 'Light 1 is selected and its eight blocks are shown.',
+        why: 'A channel carries one control value. Selecting it first makes sure the ON/OFF pattern you draw belongs to the light you mean.',
+        instruction: 'Click the name “Light 1 Digital” at the left of the digital pane.',
+        success: 'The name Light 1 Digital is boxed as selected.',
         validate: ({ sim }) =>
           sim.channelId === 'light-1'
-            ? { ok: true, message: 'Light 1 is selected. Its row now owns the eight blocks you are about to edit.' }
-            : { ok: false, message: `You selected ${channelName(sim.channelId)}. Select the row named Light 1 for this exercise.` },
+            ? { ok: true, message: 'Light 1 is selected: its name is boxed, and the Edit menu commands will act on it.' }
+            : { ok: false, message: `You selected ${channelName(sim.channelId)}. Click the name Light 1 Digital for this exercise.` },
       },
       {
         id: 'sl-blocks',
-        target: 'timeline-block',
-        title: 'Turn on only blocks 2 and 3',
-        why: 'Each block is one second. Block 2 covers 2–3 s and block 3 covers 3–4 s, so those two blocks make the light ON from second 2 to second 4 and OFF everywhere else.',
-        instruction: 'Click blocks until only 2 and 3 are ON, then press Check again if needed.',
-        success: 'Blocks 2 and 3 are ON; all other blocks are OFF.',
-        validate: ({ sim }) => checkBlocks(sim.blocks),
+        target: 'digital-pane',
+        title: 'Draw Light 1 ON from 2 s to 4 s',
+        why: 'The ruler counts seconds and frames. Two seconds at 30 frames per second is 60 frames, each a separate cue. Selecting the stretch and setting it ON is exact; drawing with the right mouse button is quicker but rougher.',
+        instruction: 'Type 00:00:02.00 and 00:00:04.00 into the selected-time fields under the panes (or drag along the Light 1 row from 2 s to 4 s), make sure Light 1 is selected, then choose Edit ▸ Set Digitals On. Turn off anything outside 2–4 s.',
+        success: 'Light 1 is ON from 00:00:02.00 to 00:00:04.00 and OFF elsewhere.',
+        validate: ({ sim }) => checkLight1(sim.lights),
       },
       {
         id: 'sl-play',
         target: 'play',
         title: 'Press Play',
-        why: 'Playback reads the blocks in order, one second each. Watching it is how you confirm the schedule, not just the picture.',
-        instruction: 'Press Play and watch the playhead, the time readout, and the lamp.',
-        success: 'The sequence starts from 00:00:00.00.',
+        why: 'Play runs the show from the Start time to the Stop time. Watching it is how you confirm the schedule, not just the picture.',
+        instruction: 'Press Play on the Control Window and watch the show time and the Light 1 lantern.',
+        success: 'The show runs from the Start time.',
         validate: ({ sim, action }) =>
-          action?.type === 'play' && sim.playing
-            ? { ok: true, message: 'Playing. The lamp should stay dark for seconds 0–2, light for 2–4, and go dark again until 8.' }
-            : { ok: false, message: 'Press Play to run the eight-second sequence.' },
+          action?.type === 'play' && sim.mode === 'play'
+            ? { ok: true, message: 'Playing. The lantern stays dark until 00:00:02.00, lights until 00:00:04.00, and goes dark again.' }
+            : { ok: false, message: 'Press Play on the Control Window to run the show.' },
       },
       {
         id: 'sl-watch',
         target: 'stop',
         title: 'Let it finish, or press Stop',
         why: 'Stopping always works, and leaving a show running when you walk away is a habit to avoid on real equipment.',
-        instruction: 'Watch until the readout says “Sequence complete”, or press Stop.',
-        success: 'Playback ended and the lamp is off.',
+        instruction: 'Watch until the show reaches the red Stop marker, or press Stop.',
+        success: 'Playback ended.',
         validate: ({ action }) =>
           action?.type === 'stop' || action?.type === 'playback-complete'
             ? { ok: true, message: 'Done. The light was commanded ON only between second 2 and second 4. In this trainer nothing was sent to any hardware.' }
-            : { ok: false, message: 'Let the sequence finish or press Stop to end playback.' },
+            : { ok: false, message: 'Let the show reach the red Stop marker, or press Stop.' },
       },
     ],
   },
   {
     id: 'read-command',
     title: 'Read a command',
-    goal: 'Select an axis from the photographed mapping, identify its displayed channel, set command 128, and compare it with a separately labeled simulated measurement.',
+    goal: 'Select an axis from the photographed mapping, identify its displayed channel, set its Soft Console slider to 128, and compare the output with a separately labeled simulated measurement.',
     lesson: 'l04',
     steps: [
       {
@@ -85,11 +79,11 @@ export const EXERCISES = Object.freeze([
         target: 'axis-select',
         title: 'Select axis 2',
         why: 'The photographed card pairs each axis with a displayed DMX address. Selecting the axis first is how you make sure a value goes to the intended movement.',
-        instruction: 'In the analog pane choose Axis 2, or type s then 2 in the terminal.',
-        success: 'Axis 2 is selected and the row reads “8 (2)”.',
+        instruction: 'Click the name “Axis 2 DMX 8” at the left of the analog pane.',
+        success: 'Axis 2 DMX 8 is boxed as the selected analog.',
         validate: ({ sim }) =>
           sim.axis === 2
-            ? { ok: true, message: 'Axis 2 is selected. In the photo its row reads “8 (2)”.' }
+            ? { ok: true, message: 'Axis 2 is selected. In the photographed card table its row reads “8 (2)”.' }
             : { ok: false, message: `Axis ${sim.axis} is selected, which the photo pairs with displayed address ${axisToDmx(sim.axis)}. Select axis 2.` },
       },
       {
@@ -97,7 +91,7 @@ export const EXERCISES = Object.freeze([
         target: 'axis-select',
         title: 'Which displayed DMX address belongs to axis 2?',
         why: 'Card address, axis number, and DMX address are three different identifiers. Reading the row teaches you which is which.',
-        instruction: 'Read the analog row or the terminal table and pick the displayed address.',
+        instruction: 'Read the channel name or the terminal table and pick the displayed address.',
         success: 'You identified 8.',
         question: { prompt: 'Displayed DMX address for axis 2 in the photographed table:', options: ['6', '7', '8', '9'] },
         validate: ({ answer }) => {
@@ -109,21 +103,23 @@ export const EXERCISES = Object.freeze([
       {
         id: 'rc-command',
         target: 'command-slider',
-        title: 'Set the command to exactly 128',
+        title: 'Set the Axis 2 slider to exactly 128',
         why: '0–255 is 256 values, and 128 ÷ 255 × 100 is about 50.2%. The number is a request on the 8-bit scale, not a distance.',
-        instruction: 'Drag the command slider (or use the arrow keys) until the readout shows 128.',
-        success: 'The readout shows 128 / 255 · 50.2%.',
-        validate: ({ sim }) =>
-          sim.command === 128
-            ? { ok: true, message: `Command is 128, which the readout shows as ${formatPercent(128)} of the 8-bit range.` }
-            : { ok: false, message: `You set ${sim.command} (${formatPercent(sim.command)}). Move the command to exactly 128; the arrow keys change it one step at a time.` },
+        instruction: 'On the Soft Console, drag the Axis 2 slider (or click it and use the arrow keys) until its Value reads 128.',
+        success: 'The Value column reads 128 for Axis 2.',
+        validate: ({ sim }) => {
+          if (sim.axis !== 2) return { ok: false, message: `That slider belongs to Axis ${sim.axis}. Use the Axis 2 row of the Soft Console.` };
+          return sim.command === 128
+            ? { ok: true, message: `Axis 2 reads 128, which is ${formatPercent(128)} of the 8-bit range.` }
+            : { ok: false, message: `Axis 2 reads ${sim.command} (${formatPercent(sim.command)}). Move it to exactly 128; the arrow keys change it one step at a time.` };
+        },
       },
       {
         id: 'rc-percent',
         target: 'command-readout',
         title: 'What percentage does 128 represent?',
         why: 'Percent is value ÷ 255 × 100. Half of 255 is 127.5, so 128 is just above halfway.',
-        instruction: 'Read the command readout and pick the matching percentage.',
+        instruction: 'Read the Soft Console value and pick the matching percentage.',
         success: 'You identified about 50.2%.',
         question: { prompt: '128 on the 0–255 scale is:', options: ['50.0%', '50.2%', '128%'] },
         validate: ({ answer }) => {
@@ -136,12 +132,12 @@ export const EXERCISES = Object.freeze([
         id: 'rc-measure',
         target: 'measure-run',
         title: 'Run the measurement model and compare',
-        why: 'A command is “go there”. A measurement is “I am there”. The trainer draws the simulated measurement separately so you never mistake one for the other.',
-        instruction: 'Press Run model and watch the simulated measurement approach 50.2% while the error shrinks.',
-        success: 'Measurement approaches the command; the error readout falls toward 0.',
+        why: 'A command is “go there”. A measurement is “I am there”. With Manual mode on, the Soft Console slider is the commanded output; the trainer draws the simulated position separately so you never mistake one for the other.',
+        instruction: 'In the simulated float under the windows, press Run model and watch the simulated position approach the commanded output while the error shrinks.',
+        success: 'The simulated position approaches the output; the error falls toward 0.',
         validate: ({ sim, action }) =>
           action?.type === 'run-measure' && sim.measuring
-            ? { ok: true, message: 'The simulated measurement is approaching the command. This is a teaching model with no mass, friction, or gains; it says nothing about how far the real axis would travel. Compare the two labeled numbers, not the picture.' }
+            ? { ok: true, message: 'The simulated position is approaching the commanded output. This is a teaching model with no mass, friction, or gains; it says nothing about how far the real axis would travel. Compare the two labeled numbers, not the picture.' }
             : { ok: false, message: 'Press Run model to start the simulated measurement.' },
       },
     ],
@@ -157,7 +153,7 @@ export const EXERCISES = Object.freeze([
         target: 'laptop-ip-select',
         title: 'Choose 192.168.0.20',
         why: 'With netmask 255.255.255.0 the first three numbers are the network portion. 192.168.0.20 shares it with the controller and uses a different host number.',
-        instruction: 'Select 192.168.0.20 in the laptop IP chooser.',
+        instruction: 'Select 192.168.0.20 in the laptop address chooser.',
         success: 'The result explains “same subnet, different host”.',
         validate: ({ sim }) =>
           sim.laptopIp === '192.168.0.20'

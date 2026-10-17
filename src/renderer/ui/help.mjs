@@ -15,7 +15,7 @@ const SECTIONS = [
   ['effect', 'What it changes in the software'],
 ];
 
-export function mountHelp({ onOpenEntry, onOpenPhoto }) {
+export function mountHelp({ onOpenEntry, onOpenPhoto, onOpen }) {
   const tooltip = document.getElementById('tooltip');
   const dialog = document.getElementById('help-dialog');
   let lastControl = null;
@@ -88,13 +88,34 @@ export function mountHelp({ onOpenEntry, onOpenPhoto }) {
       const id = active ? active.dataset.control : lastControl;
       if (id) open(id);
     }
-    if (event.key === 'Escape') hideTooltip();
+    if (event.key === 'Escape') { hideTooltip(); if (helpMode) setHelpMode(false); }
   });
 
-  document.getElementById('help-current').addEventListener('click', () => {
-    if (lastControl) open(lastControl);
-    else open('help-button');
+  // "What's this?" help: press Help ?, then click any control to explain it
+  // instead of using it. The recreated PC•MACs windows carry no ? buttons of
+  // their own, so this is their clickable help. Esc or a second press cancels.
+  const helpCurrent = document.getElementById('help-current');
+  let helpMode = false;
+  function setHelpMode(on) {
+    helpMode = on;
+    document.body.classList.toggle('help-mode', on);
+    helpCurrent.setAttribute('aria-pressed', String(on));
+  }
+  helpCurrent.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setHelpMode(!helpMode);
   });
+  for (const type of ['pointerdown', 'mousedown', 'click', 'contextmenu']) {
+    document.addEventListener(type, (event) => {
+      if (!helpMode || dialog.contains(event.target) || helpCurrent.contains(event.target)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (type !== 'click') return;
+      const found = controlFromEvent(event);
+      setHelpMode(false);
+      open(found ? found.id : 'help-button');
+    }, true);
+  }
 
   function citation(key) {
     const c = MANUAL_CITATIONS[key];
@@ -144,6 +165,7 @@ export function mountHelp({ onOpenEntry, onOpenPhoto }) {
     replace(dialog, body);
     if (!dialog.open) dialog.showModal();
     dialog.querySelector('.btn-primary').focus();
+    if (onOpen) onOpen({ id, name: c.name });
   }
 
   function close() {

@@ -1,124 +1,130 @@
-# Build the first Windows version of Roseflow PC Mac Training
+# Recreate the actual PC•MACs interface in the guided trainer
 
 <!-- one-file-revision -->
-**One File task · revision 1** — prepared October 6, 2026 at 3:56 PM (UTC-07:00)
+**One File task · revision 1** — prepared October 7, 2026 at 9:27 PM (UTC-07:00)
 
-- Project: Float Lab · conversation “My project repository is currently empty....”
+- Project: Float Lab · conversation “so why arent we using actual pcmac ui for...”
 - First task revision in this conversation
-- Feedback included: October 6, 2026 at 3:41 PM (UTC-07:00) — “My project repository is currently empty. The Markdown and ZIP already attached…”
-- Evidence: an inspection of 5 pass(es) recorded in One File. Verify the current checkout before editing.
+- Feedback included: October 7, 2026 at 7:36 PM (UTC-07:00) — “so why arent we using actual pcmac ui for examples and its own interface”
+- Feedback included: October 7, 2026 at 7:38 PM (UTC-07:00) — “check the folder your self and you tell me”
+- Feedback included: October 7, 2026 at 8:51 PM (UTC-07:00) — “https://gilderfluke.com/wp-content/uploads/2019/12/PCMACs_Manual.pdf LOOK HERE A…”
+- Feedback included: October 7, 2026 at 9:23 PM (UTC-07:00) — “ok get the promot going”
+- Evidence: saved findings only. The current code was not re-inspected for this revision; verify every referenced file before editing.
 <!-- /one-file-revision -->
 
 Implementation request: This document describes the requested work for this task revision. It is not a project overview, persistent memory, or a record of completed changes. Use repository documentation for project context and verify current code before editing. If requirements conflict, identify the conflict instead of silently choosing one.
 
 ## Outcome
 
-Create an independent Windows training app centered on a familiar, reference-supported PC•MACs-style workspace. Learners can explore controls, get plain-language help, search an offline handbook, complete guided practice, and see clearly labeled simulated results. Progress survives closing the app, with Resume and Restart controls. Build from the supplied prototype in the user’s empty repository.
+Redesign the existing Roseflow PC Mac Training app so learners see and practise in a reference-supported recreation of the actual PC•MACs/Gilderfluke interface. Use the supplied PC•MACs manual and examine the actual application online to establish the interface. Keep the guided, one-step-at-a-time learning experience, offline simulation, and saved progress.
 
 ## Scope
 
-- Create the application, local content and assets, progress storage, Windows packaging, development documentation, and focused verification.
-- Reuse useful prototype lessons, questions, demonstrations, and images while integrating them into the required workspace-centered experience.
-- Treat the repository as empty, as the user states. The attachments are starting materials, not files already installed in the repository. Do not repeat repository investigation to rediscover the project.
-- Exclude real hardware communication, equipment-specific simulation without supporting evidence, and automatic public publication.
-- Inspect original references before claiming interface fidelity. Missing PC•MACs screens can block faithful reproduction of those screens without blocking the offline application foundation.
+- Edit the existing application source, styles, lesson content, and relevant implementation documentation. Preserve useful existing implementation rather than rebuilding from an empty repository.
+- Replace the simplified main workspace with an interactive, reference-supported recreation of the relevant PC•MACs screens. Review the terminal recreation against its references and correct supported discrepancies.
+- Integrate demonstrations and learner practice into those recreated controls while retaining the guided lesson experience.
+- Leave original source materials and background handoff documents intact. Task export, task revision numbering, and One File application controls are outside the implementation scope.
 
 ## Requirements
 
-- Use the product name Roseflow PC Mac Training and clearly identify it as an independent training app.
-- Closely recreate the PC•MACs interface and workflow using reference-supported layout, controls, terminology, and behavior. Keep the familiar workspace central and uncluttered. Identify missing evidence and distinguish simulations from verified PC•MACs behavior.
-- Explain every implemented training control in plain language through hover, keyboard focus, and an explicit clickable help option. Explain its software effect and possible implications for a connected mechanism where supported.
-- Include a searchable handbook similar in purpose to One File’s. Beginner walkthroughs must explain each control’s purpose, when to use it, an example, common mistakes, and the expected result.
-- Provide guided practice that highlights the next control, explains why it matters, lets the learner try it, and shows simulated results. Preserve useful existing questions, answer-specific explanations, lessons, and simulations.
-- Use short explanations and define terms before relying on them. Put longer explanations in contextual help and the handbook. Include reference-supported Rose Float examples involving electronics, sensors, hydraulics, motion, and timing.
-- Keep the initial version offline and simulation-only. Do not send commands to real hardware or require a cloud service for installed learning.
-- Save learning progress locally and provide Resume learning and Restart learning controls. Keep this storage independent of One File.
-- Do not invent device-specific behavior, sensor identities, hydraulic settings, wiring, or firmware details. Label unknowns and explain what evidence would establish them.
-- Make the source materials and reference images accessible to the VS Code assistant through actual staged files and working local references, not attachment names alone. Verify availability before relying on them.
+- Use the actual PC•MACs interface for examples, demonstrations, and learner practice. A generic workspace with PC•MACs terminology or a separate reference-photo viewer does not fulfill this request.
+- Consult https://gilderfluke.com/wp-content/uploads/2019/12/PCMACs_Manual.pdf and examine the actual PC•MACs application online. Establish the applicable version and source support for layouts, controls, terminology, and behavior before implementing them. The supplied findings do not establish that this research has happened.
+- Identify missing required sources and notify the user before editing if required sources are unavailable. Keep reference gaps explicit; do not invent unsupported screens or claim an identical match without evidence.
+- Keep the application name Roseflow PC Mac Training and its downloadable Windows training-app purpose.
+- Present the learning levels when the app opens, using the exact names Basic, intermediate, and I hate my life. Give a new learner a clear starting point and group topics by function. [P1][P7]
+- Basic: Teach enough to get by, including the interface, graphs, simple terminology, functions, hydraulics, and assignments. [P1]
+- intermediate: Go deeper into settings and connected workflows. [P1]
+- I hate my life: Provide comprehensive teaching within the available reference support. [P1]
+- Keep a compact lesson panel beside the relevant recreated workspace, with Back, Next, and a visible step count. Begin simply, introduce controls gradually, and open the handbook when needed.
+- Each lesson must open the relevant screen, highlight one control or concept, explain it with an example, demonstrate the action and result, let the learner practise in that same interface, and explain success or help correct mistakes before Next.
+- Preserve guided practice and saved progress, with resume and restart options. Preserve existing progress where possible and explain any necessary migration. [P7]
+- Provide a searchable handbook. Beginner explanations must cover a control’s purpose, when to use it, an example, common mistakes, and the expected result.
+- Provide plain-language control explanations on hover, through a clickable help option, and through keyboard focus.
+- Explain each setting’s software effect and supported implications for the simulated mechanism. Use reference-supported Rose Float examples involving hydraulics, electronics, sensors, motion, and timing. Do not present photographed settings as recommended operating values.
+- Keep operation offline and simulation-only, with no real hardware commands. Clearly identify the trainer as independent and distinguish simulated behavior from verified PC•MACs behavior.
+- Reuse useful existing teaching content and prototype code from available original Markdown, ZIP, documentation, and reference images. Confirm their actual availability rather than assuming attachment names establish repository access.
+- Use the original training-app image labeled Screenshot 1 from the October 7, 10:09 AM feedback as the redesign feedback reference. Do not substitute a screenshot of One File. Its availability remains unverified in the supplied findings. [P7]
+- Automated checks must not take focus or control the user’s keyboard or clipboard. Do not stage, commit, or push changes.
 
 ## These replace earlier decisions
 
-- Float Lab is the earlier product name; Roseflow PC Mac Training replaces it. Float Lab remains the project workspace name. This identity correction is also recorded in [P1].
-- The handoff’s description of Windows as merely a proposed target no longer applies: the user explicitly requires a downloadable Windows app.
-- The prototype’s lesson-dashboard layout is a starting point, not the final product direction. The current requirement puts the PC•MACs-style workspace and integrated teaching at the center.
+- The original empty-repository and build-first-version instructions no longer apply. The application already exists and must be redesigned while preserving useful implementation and progress. [P7]
+- The earlier draft’s requirement to confirm revision 2 before editing no longer applies; the user explicitly removed that prerequisite. Task numbering belongs to the application’s task workflow. [P2][P7]
+- The documented choice to use a simplified PC•MACs-style workspace is no longer the UI target. The latest instruction requires consulting the manual, examining the actual application online, and using its actual interface as the basis for the trainer.
 
 ## Verified implementation facts
 
-- In the attached baseline, app/app.js defines Q and lessons with ten lesson records and two questions per lesson. Records include teaching text, simpler explanations, takeaways, demo identifiers, answer keys, and explanations for incorrect choices. — `File 2, Float-Lab-Handoff/app/app.js:3–15`
-- In attached app/app.js, the runtime state declaration includes index, qi, answered, timer, complete, and missed. nav renders lesson navigation and completion counts. These are observations of the supplied source excerpt, not an installed application. — `File 2, Float-Lab-Handoff/app/app.js:16–18`
-- In attached app/app.js, openLesson validates the lesson index, clears the current timer, and resets qi to zero. renderQuestion resets answered to false and disables advancement. answer permits retries after mistakes, records missed topics, and enables advancement after a correct answer. — `File 2, Float-Lab-Handoff/app/app.js:19–22`
-- In attached app/app.js, the next-button handler advances questions, marks a lesson complete after its final answered question is advanced, and creates a checkpoint identifying unfinished lessons and topics needing review. — `File 2, Float-Lab-Handoff/app/app.js:23–24`
-- In attached app/app.js, renderDemo creates templates for component roles, signals, command values, calibration, axis mapping, feedback, timing, networking, menu explanations, and a troubleshooting challenge. The timeline template starts with blocks 2 and 3 enabled; calibration offers 10, 20, and 40 cm example endpoints; the network template labels its laptop choices hypothetical. — `File 2, Float-Lab-Handoff/app/app.js:25–36`
-- Attached app/style.css defines navy/lime styling, sidebar and panel layouts, responsive breakpoints, focus-visible outlines, and reduced-motion rules. This establishes source styling, not a visually inspected render or PC•MACs fidelity. — `File 2, Float-Lab-Handoff/app/style.css, selectors :root, .layout, .workspace, :focus-visible, and @media; supplied source has no numbered lines`
+- src/renderer/ui/workspace.mjs: mountWorkspace constructs a custom ruler, analog pane, clickable digital blocks, Play/Stop controls, a command slider, and teaching readouts. It labels the workspace OffLine Editing Window and explicitly describes its eight-second block timeline as a teaching simplification. This is source evidence, not runtime appearance verification. — `[F4] src/renderer/ui/workspace.mjs:27-175`, `[F7] src/renderer/ui/workspace.mjs:175-198`
+- docs/REFERENCE_FIDELITY.md says the ten photos obscure the main PC•MACs window, leaving ruler, grid, and trace fragments visible. It describes the workspace as based on manual descriptions and lists zoom, selection ranges, presets, drag-and-drop triggers, and many channels as unimplemented. These are documented explanations; the supplied inspection did not independently verify those claims against the manual and all photos. — `[F3] docs/REFERENCE_FIDELITY.md:10-18`, `[F3] docs/REFERENCE_FIDELITY.md:41-59`
+- src/renderer/content/references.mjs catalogues ten photo filenames and includes transcribed Br-EFB main, feedback, and network menus plus photographed prompts. — `[F5] src/renderer/content/references.mjs:6-118`
+- Photo 06 visibly shows the Terminal–COM3 title, Card field, Character delay selector, Clear Screen, Status, Config Done and Control buttons, a left text menu, and a right ASCII table. src/renderer/ui/terminal.mjs constructs those elements and uses registered main, feedback, and network snapshots. The comparison establishes recognizable structure in a still photo and source code, not an exact running visual or behavioral match. — `[F24] one-file-promot-float-lab/sources/Float-Lab-Handoff/reference-photos/06-1000066746.jpg (image)`, `[F8] src/renderer/ui/terminal.mjs:16-86`, `[F9] src/renderer/ui/terminal.mjs:110-157`
+- src/renderer/ui/terminal.mjs uses decorative window-button spans, a read-only Card value of 1, disabled Character delay at None, and disabled Status. It adds clickable menu lines, help buttons, a three-character answer field, Send, and teaching messages. Main and feedback values come from snapshots; state changes the selected-axis label and arrow, while uptime is fixed at 0:00:19:41. src/renderer/styles.css specifies an 11.5 px terminal font, 1.32 line height, and 400 px minimum screen height. — `[F8] src/renderer/ui/terminal.mjs:16-67`, `[F8] src/renderer/ui/terminal.mjs:88-100`, `[F9] src/renderer/ui/terminal.mjs:101-123`, `[F16] src/renderer/styles.css:369-401`
+- src/renderer/ui/workspace.mjs: update hides workspace sections absent from revealed. src/renderer/app.mjs: render obtains lessonRun.revealed(), controls timeline and terminal container visibility, and passes disclosure information to both renderers. The terminal toolbar requires term-toolbar. — `[F4] src/renderer/ui/workspace.mjs:136-142`, `[F20] src/renderer/app.mjs:619-649`, `[F9] src/renderer/ui/terminal.mjs:130-136`
+- src/renderer/ui/lesson.mjs renders explanations, optional examples and demonstrations, practice or questions, feedback, and navigation. Next is disabled when canAdvance is false or a demonstration is running. — `[F10] src/renderer/ui/lesson.mjs:26-66`
+- src/renderer/ui/lesson.mjs resolves step.photo against REFERENCE_IMAGES and conditionally displays See the reference photo. The open-photo handler in src/renderer/app.mjs stores the filename. src/renderer/ui/dialogs.mjs constructs the image from IMAGE_DIR and that filename, includes caption-based alternative text and descriptions, and warns that photographed values are historical observations rather than recommendations. — `[F10] src/renderer/ui/lesson.mjs:16-24`, `[F10] src/renderer/ui/lesson.mjs:68-72`, `[F19] src/renderer/app.mjs:507-509`, `[F15] src/renderer/ui/dialogs.mjs:24-43`
+- src/renderer/content/lessons/intermediate.mjs assigns different disclosure sections to actual lessons: Frames and show time uses title, ruler, digital, and transport; Five identifiers that are not interchangeable uses title, analog, terminal, and term-toolbar; The GilderTerm toolbar uses terminal and term-toolbar. — `[F25] src/renderer/content/lessons/intermediate.mjs:10-14`, `[F28] src/renderer/content/lessons/intermediate.mjs:105-110`, `[F28] src/renderer/content/lessons/intermediate.mjs:162-167`
+- src/renderer/content/lessons/comprehensive.mjs: What the references do not settle includes a practice step linking 07-1000066747.jpg and targeting photo-toggle. It asks the learner to find the Vel Limit column, but its validator checks only action?.type === 'open-photo'. Opening the image is verified by that predicate; identifying the column is not. — `[F31] src/renderer/content/lessons/comprehensive.mjs:127-168`
 
 ## Assumptions — not verified
 
-- The implementation plan assumes the original Markdown and complete ZIP can accompany the task. Their availability to VS Code is not confirmed. Confirm by opening the actual files, extracting the archive, and loading its images in that environment.
-- Interpret “handbook similar to One File’s” as an integrated searchable reference with beginner walkthroughs. Exact visual parity is unspecified and would require a separate reference if desired.
+- The inspected modules remain the relevant implementation entry points. Confirm with a focused read of the current files before editing; the supplied findings are not a guarantee that the files have remained unchanged.
+- The existing application can support the redesign without replacing its framework. Confirm the current stack and constraints from package.json and the application entry points before recommending architectural changes.
 
 ## Open questions — resolve while implementing
 
-- First verify source delivery: where can VS Code read File 1 and the complete File 2 archive? A task Markdown file or attachment label alone does not establish availability. If an original is missing, identify the exact missing item and arrange staging while continuing independent scaffolding.
-- Before porting, read the complete extracted app/app.js, app/index.html, README.md, docs/VS_CODE_PROMPT.md, and docs/lessons.json. The current supplied excerpts omit app.js lines 37–50 and several documents; their exact contents must not be reconstructed from historical summaries.
-- Which PC•MACs version and workspace do the original images actually establish? If they show only controller terminal menus, obtain a readable full-window reference, relevant menu/dialog states, and the offline select/edit/play/stop workflow before certifying reproduction of the main workspace.
-- Which Windows architecture and packaging target should the first artifact support, and is a Windows environment available for a packaged-app smoke test? Document the choice and any unperformed validation.
-- What distribution audience is authorized for workshop images and team materials? Prepare a buildable project and artifact workflow without assuming permission for public release or choosing a public license for those materials.
+- First verify: which PC•MACs version should the recreation represent, what the linked manual establishes, and which authoritative online application views establish its actual appearance and interactions? Neither the manual contents nor online application inspection is supplied here.
+- First verify: are the original Markdown, ZIP contents, reference photos, and Screenshot 1 accessible to the implementer? Locate them through available project materials and supplied attachment links; report missing required sources before editing.
+- Which differences between the existing workspace or terminal and the actual application are supported corrections, intentional teaching additions, or still unsupported? Determine this from the new reference comparison.
+- What persistence format, lesson identifiers, and completion rules currently store progress, and what migration is necessary? These were not established by the supplied findings.
+- Which build, packaging, and test commands are available, and which checks can run without desktop focus, keyboard, or clipboard control?
+- How does the app currently render and behave at runtime? The findings establish code and still-image observations, not live appearance, successful progression, or persistence.
 
 ## Proposed approaches — suggestions, not requirements
 
-- Recommended framework: Electron with Electron Forge, retaining vanilla HTML/CSS/JavaScript where useful. This allows substantial reuse of the prototype, bundles offline assets, and supports desktop-owned local storage and Windows packaging. Its tradeoff is a larger application footprint. This is a recommendation, not a previously approved framework decision. Verify current official documentation and supported versions, then pin dependencies in a lockfile.
-- Proposed first version: one coherent training workspace with channel selection, a simplified eight-second timeline, command/measurement displays, contextual help, a handbook, and guided exercises. Use original references to determine the actual layout. Clearly label teaching simplifications; do not present the eight-block exercise as an exact PC•MACs editor. The earlier one-workspace/one-exercise suggestion was not an accepted scope limit [P2].
-- Separate curriculum, simulated state, guided-step validation, rendering, and persistence. Give lessons, questions, controls, and guided steps stable identifiers. Preserve all ten useful lesson topics and twenty question records, reconciling app.js with docs/lessons.json before selecting an authoritative runtime dataset.
-- Use shared teaching records for control help and handbook entries. Search titles, body text, and useful aliases such as mask/netmask, PC Mac/PC•MACs, and channel/DMX. Show matching excerpts, empty-query guidance, and no-results feedback. Opening help or a result should preserve practice state. Link entries to related controls, lessons, and locally available reference images.
-- Proposed exercise — Schedule a light: select a simulated digital channel, enable only blocks 2 and 3 in an eight-second sequence, and play it. Explain the intervals 2–3 and 3–4 seconds. Validate the learner’s action, explain mistakes, permit retries, and support stopping playback.
-- Proposed exercise — Read a command: select an axis from the documented photo-mapping example, identify its displayed channel, and set command 128. Explain approximately 50.2% of the 8-bit range and compare the requested value with a separately labeled simulated measurement. Do not infer actual travel.
-- Proposed exercise — Understand an address: compare 192.168.0.20, 192.168.1.20, and 192.168.0.10 against the historical controller example 192.168.0.10/24. Explain same-subnet, different-subnet, and duplicate-address cases. Perform no scanning, pinging, or computer network changes.
-- Implement guided steps with a highlighted target, a short explanation, action validation, specific feedback, and Back/retry/repeat-explanation controls. Count completed actions and answered questions rather than visited screens. Preserve the existing one-question-at-a-time learning loop.
-- Recommended persistence design: a versioned local progress document in the desktop app’s user-data directory, validated on load and written atomically after meaningful changes. Store current location, completed lessons and guided steps, missed topics, necessary answer state, and meaningful exercise settings. Restore animations paused. Account for openLesson and renderQuestion resetting state when adapting the prototype. Keep exercise reset separate from confirmed course restart, preserve recoverable data, and report save failures visibly.
-- For Electron, disable renderer Node integration and enable context isolation and sandboxing. Expose only narrow, validated IPC needed by the app. Restrict navigation and new windows; allow approved source links to open in the system browser. Bundle learning dependencies locally. Provide development and packaging commands and a Windows GitHub Actions artifact workflow without automatic publication.
+- Create a concise reference mapping from each recreated screen and important interaction to a manual page, authoritative application view, or supplied photo. Update docs/REFERENCE_FIDELITY.md with supported behavior, deliberate training adaptations, and remaining gaps.
+- Evolve src/renderer/ui/workspace.mjs, src/renderer/ui/terminal.mjs, and src/renderer/styles.css around the verified interface. Keep lesson explanations and help visually distinct from the recreated application controls.
+- Reuse the existing disclosure and lesson-rendering connections. Introduce relevant windows and interactions progressively while preserving recognizable, reference-supported layouts.
+- Connect demonstrations and practice to the same simulated controls and state. Review affected validation predicates so they check the action or result requested by the lesson.
+- Preserve stable lesson identifiers and progress fields where feasible. If migration is needed, implement and document it explicitly instead of silently resetting existing learners.
 
 ## Must not change
 
-- Keep the supplied originals and background handoff documents intact, including FLOAT_LAB_PROJECT_CONTEXT.md and the archive’s docs/FLOAT_LAB_PROJECT_CONTEXT.md and docs/VS_CODE_PROMPT.md. Edit application source and create current setup/build documentation separately.
-- Preserve the separation between observed historical settings, hypothetical teaching examples, and verified software behavior. Do not turn photographed values into recommended equipment settings.
-- Keep learning progress independent of One File. Do not modify One File or make it the training app’s runtime backend.
-- Maintain simulation-only operation: no serial, USB, DMX, controller Ethernet, discovery, live connection controls, or hardware-control libraries.
+- Offline, simulation-only operation and the prohibition on real hardware commands.
+- The exact level names Basic, intermediate, and I hate my life.
+- Existing learner progress must not be silently discarded.
+- Original Markdown, ZIP materials, reference images, and background handoff documents must remain intact.
+- Do not stage, commit, or push. Do not automate desktop focus changes, keyboard control, or clipboard access.
 
 ## Implementation guidance
 
-- The prompt text is ready to review and save into the application’s ONE_FILE_TASK.md package. Original-file transfer remains unverified; saving task text alone does not establish that the ZIP and images reached VS Code.
-- Source handoff: make File 1, FLOAT_LAB_PROJECT_CONTEXT.md, and File 2, Float-Lab-Handoff.zip, available as actual readable files alongside the task or in another documented local location. Use application-provided relative links to selected originals; do not invent attachment or image paths. Record verified local source locations in the new setup documentation. If the package does not include the ZIP, arrange delivery of the original archive before claiming source reuse is ready.
-- The archive inventory identifies Float-Lab-Handoff/app/index.html, app/style.css, app/app.js, app/controller.jpg, app/feedback.jpg, app/network.jpg, app/workshop.jpg, README.md, .gitignore, docs/FLOAT_LAB_PROJECT_CONTEXT.md, docs/VS_CODE_PROMPT.md, and docs/lessons.json. Read the complete files after extraction; the supplied attachment excerpts are not the entire source bundle.
-- Original visual-reference labels in File 2 are Float-Lab-Handoff/reference-photos/01-1000066743.jpg, 02-1000066740.jpg, 03-1000066744.jpg, 04-1000066739.jpg, 05-1000066745.jpg, 06-1000066746.jpg, 07-1000066747.jpg, 08-1000066748.jpg, 09-1000066749.jpg, and 10-1000066750.jpg. These ten originals and the four app JPGs were listed, not visually inspected in this preparation. Inspect their pixels before using them as visual evidence. File 1 documents reported subjects and settings; that documentation is separate from visual inspection and runtime verification.
-- Preserve accuracy boundaries: 0–255 represents 256 values, and normalized percentage is value / 255 × 100. Values have no inherent centimeters, volts, or ohms. The 0–10, 0–20, and 0–40 cm calibration ranges are hypothetical linear examples. The existing approach-to-target animation is an educational model, not a validated Br-EFB, hydraulic, or PID simulator; inspect its complete handler before porting it.
-- Keep COM-port labels, card addresses, axes, DMX channels, and IP addresses distinct. File 1 documents historical zero-based mapping 6→0, 7→1, 8→2, and 9→3, plus controller IP 192.168.0.10, netmask 255.255.255.0, and gateway 192.168.0.1. Confirm against originals before presenting these as image observations. The hypothetical laptop address is not a discovered setting; subnet agreement does not establish reachability or a working gateway.
-- Leave Velocity Limit units/algorithms, firmware-specific PID behavior, startup special values, override release, sensor identity, travel, and wiring explicitly unresolved. Their absence does not block generic teaching exercises. Firmware-matched documentation is needed before implementing equipment-specific behavior. Do not mistake the controller’s terminal configuration interface for the complete PC•MACs application.
-- The handoff links manufacturer manuals rather than bundling them: https://gilderfluke.com/wp-content/uploads/2019/11/PCMACs_Manual.pdf and https://gilderfluke.com/wp-content/uploads/2021/01/Br-EFB_manual.pdf. Record edition, page/section, URL, and verification status for claims drawn from them. Earlier indexed excerpts are not a complete manual review, and installed lessons must not depend on downloading manuals.
-- Use current official Electron security and sandbox documentation and Electron Forge setup/Windows-maker documentation when implementing the recommended stack. Do not infer current package versions from the historical handoff.
-- Use focused behavioral tests for persistence recovery, question advancement, guided-step validation, timeline boundaries, and any privileged IPC. Source checks and successful packaging do not replace interaction testing. Report precisely whether the deliverable is source, a CI artifact, an installer, or a tested installed application.
+- Begin with focused verification of the listed entry points, progress storage, and reference availability. Use the supplied findings to avoid repeating a broad repository investigation.
+- Screenshot 1 is the training-app feedback reference associated with the overcrowded learning experience. The historical description is not a fresh visual inspection and is not evidence of the original PC•MACs interface. [P1][P2][P7]
+- Use Photo 06 as a terminal appearance reference within the limits of the supplied still-image comparison. Photo 07 has a verified lesson link, but its visual contents were not independently established in these findings.
+- Reference images should inform the interactive recreation; displaying them in the existing image dialog alone does not satisfy the requested interface change.
+- Do not assume the terminal’s fixed values, disabled controls, answer-length limit, or CSS dimensions match the real application. Verify each relevant detail before retaining or changing it.
+- Use existing project build and test commands once inspected. Prefer checks of meaningful behavior such as progression, persistence, migration, and offline operation.
+- Report the implemented changes, validation actually performed, reference support, and remaining gaps. Distinguish source review from runtime verification.
 
 ## Acceptance criteria
 
-- The repository contains a buildable Windows project, dependency lockfile, documented development/package commands, and an artifact workflow. The source handoff identifies readable originals and all required images through verified local paths.
-- The app displays Roseflow PC Mac Training and clear independent-trainer/simulation identification. Its workspace is central. Reproduced elements have reference support; unresolved fidelity gaps are explicitly recorded and are not reported as completed exact reproduction.
-- Every implemented training control has equivalent help through hover, keyboard focus, and clicking. Longer help is keyboard accessible and dismissible, and opening help or the handbook preserves practice state.
-- The offline handbook covers the existing curriculum and provides useful searchable explanations, examples, mistakes, expected results, and supported mechanism implications.
-- Guided practice highlights the next control, explains it, validates the attempted action, provides specific correction and retry, and records completion accurately. Under the recommended exercise plan, all three proposed exercises work end to end.
-- The ten prototype lesson topics and twenty question records are retained or equivalently integrated, with valid answer keys and wrong-answer explanations. Wrong-then-right answers, revisiting, skipping and returning, completion, and missed-topic review work.
-- Simulations preserve the distinction between commands and measurements. Under the recommended exercise plan, blocks 2 and 3 cover seconds 2–4, command 128 displays approximately 50.2%, and the three network examples produce the intended explanations.
-- Progress survives a real application restart. Resume restores the correct learning location and relevant settings with playback paused. Confirmed Restart resets progress predictably; malformed data and failed writes do not crash the app or falsely mark work complete.
-- Installed lessons, handbook search, help, simulations, progress, and required images work with runtime network access disabled. No hardware communication is attempted.
-- The packaged artifact includes required assets, follows the chosen desktop security model, and is identified accurately. Unperformed Windows or runtime checks remain explicitly unverified.
+- The linked manual and the actual application online have been examined, with the chosen version and usable evidence recorded. Unavailable required sources are reported before editing.
+- Relevant PC•MACs screens are interactive recreations supported by the references. The change does more than rename or restyle the existing simplified timeline, and deviations are documented.
+- Opening the app presents Basic, intermediate, and I hate my life exactly, with a clear starting lesson and saved-progress resume and restart options.
+- Lessons use a compact adjacent panel with Back, Next, and a step count. They introduce one concept, demonstrate an action and result, allow practice in the same interface, and provide feedback before progression.
+- Existing progress survives the update where feasible; any necessary migration is implemented, explained, and checked.
+- Searchable handbook content and hover, clickable-help, and keyboard-focus explanations remain available and describe supported software and simulated mechanism effects.
+- The app remains usable offline and issues no real hardware commands. Independent-trainer and simulation boundaries are clear.
+- Available build and relevant behavioral checks pass without taking focus or controlling the user’s keyboard or clipboard.
+- Original reference materials and background handoff documents remain unchanged, and nothing is staged, committed, or pushed.
 
 ## Runtime and visual checks
 
-- Run the packaged app on Windows with network access disabled. Visit every lesson, open its images, search the handbook, and complete the implemented guided exercises.
-- Compare implemented workspace elements with the inspected original references at the same relevant states. Record which elements are observed, simplified, or still unverified.
-- Use mouse and keyboard to open and dismiss help, follow guided highlights, navigate search results, and return to practice. Check visible focus, readable scaling, uncluttered layout, and reduced-motion behavior.
-- Make incorrect answers and exercise changes, retry successfully, skip lessons, return, and finish. Confirm progress reflects completed work and review includes missed topics.
-- Close and reopen during partial progress and active animation. Verify correct Resume state with playback paused, course restart confirmation, and a separate exercise reset.
-- Exercise malformed/incompatible saved data and a controlled save failure. Verify a clear recovery path and no silent completion or data-loss claim.
-- Start and stop the timeline and feedback demonstrations repeatedly, then leave their screens. Check interval boundaries and timer cleanup. Verify approved external links open outside the app and unsupported navigation remains blocked.
+- Compare the running recreated workspace and terminal with the selected application version, manual figures, and Photo 06. Check layout, labels, control states, text readability, and resizing.
+- From a fresh learner state, complete an introductory lesson through explanation, demonstration, practice, incorrect-action feedback, correction, and Next.
+- Confirm each exact level name opens suitable content and that progressive disclosure keeps the current lesson understandable.
+- Close and reopen the app to verify resume behavior. Check restart and any migration using disposable progress data rather than the user’s only saved progress.
+- Check handbook search, hover help, clickable help, keyboard focus, and reference-photo captions and warnings.
+- Verify the packaged app works without a network connection. Perform automated runtime checks headlessly or in an isolated process that cannot seize desktop focus or control the user’s keyboard or clipboard.
 
 ## Before you edit
 
@@ -127,18 +133,26 @@ This task was written from an inspection recorded at the time shown below. Verif
 ## Provenance
 
 - Project: Float Lab
-- Original request: My project repository is currently empty. The Markdown and ZIP already attached are the starting material for building the app, not files already installed in my repository.  Use those attachments, our agreed requirements, and the corrected project reference to prepare the first implementation task for Roseflow PC Mac Training.  First explain the proposed first version in plain language, then prepare the task for my VS Code assistant to build it in the empty repository. Preserve our required PC•MACs-style workspace, contextual teaching, searchable handbook, guided practice, offline simulation-only operation, and saved progress with resume/restart. No real hardware commands.  Recommend a suitable framework and explain that choice; don’t describe an unconfirmed choice as something I already approved. Identify any missing references that actually block implementation, and clearly label simulated or unverified behavior.  Reuse the useful prototype code and teaching content from the ZIP. Ensure the handoff identifies and makes available the source materials and reference images the VS Code assistant needs—not just attachment names it cannot access.  Don’t inspect an empty repository to learn the project again. Prepare the task for review and tell me clearly when it is ready to save into the project’s ONE_FILE_TASK.md package.
-- Task prepared: October 6, 2026 at 3:56 PM (UTC-07:00)
-- Inspection passes: 5
-- Source freshness: source versions were revalidated during the recorded inspection.
-- Material unverified points:
-  - [Partial] Application workflow: are the task and original source assets confirmed available to the VS Code assistant?
-
-<!-- one-file-files -->
-## Attached files
-
-The conversation this task was prepared from included these attached files. Their text was given to the assistant that wrote this task. **The original files are not included in this package**: if the work depends on details not written above, ask the user for them.
-
-- File 1 · FLOAT_LAB_PROJECT_CONTEXT.md · Markdown · 29.8 KB · SHA-256 9803636390fe17ba… · 574 lines, 30,350 characters, 3 sections
-- File 2 · Float-Lab-Handoff.zip · ZIP archive · 6 MB · SHA-256 2f6b37c7574ac63a… · 22 files · 8 documents read, 14 listed only
-<!-- /one-file-files -->
+- Original request: ok get the promot going
+- Task prepared: October 7, 2026 at 9:27 PM (UTC-07:00)
+- Inspection passes: 0
+- Source freshness: not re-checked for this export; the task is based on the recorded inspection.
+- Sources the findings rest on:
+  - `README.md:1-137 sha256:309fd3c9eae3`
+  - `package.json:1-28 sha256:276683624d8a`
+  - `docs/REFERENCE_FIDELITY.md:1-79 sha256:dbf6baf5057b`
+  - `src/renderer/ui/workspace.mjs:1-175 sha256:1a3b422e73d6`
+  - `src/renderer/content/references.mjs:1-176 sha256:a40b6e20c6f4`
+  - `src/renderer/app.mjs:1-150 sha256:872e30f935a4`
+  - `src/renderer/ui/workspace.mjs:175-198 sha256:1a3b422e73d6`
+  - `src/renderer/ui/terminal.mjs:1-100 sha256:9080a36c7291`
+  - `src/renderer/ui/terminal.mjs:101-164 sha256:9080a36c7291`
+  - `src/renderer/ui/lesson.mjs:1-87 sha256:c6be8af57bff`
+  - `src/renderer/ui/dialogs.mjs:1-55 sha256:bad8196283e1`
+  - `src/renderer/styles.css:360-429 sha256:e37fa2a5a693`
+  - `src/renderer/app.mjs:500-511 sha256:872e30f935a4`
+  - `src/renderer/app.mjs:606-649 sha256:872e30f935a4`
+  - `src/renderer/content/lessons/steps.mjs:1-100 sha256:ca32b47bd5dc`
+  - `src/renderer/content/lessons/intermediate.mjs:1-65 sha256:68587a150ce0`
+  - `src/renderer/content/lessons/intermediate.mjs:105-200 sha256:68587a150ce0`
+  - `src/renderer/content/lessons/comprehensive.mjs:110-180 sha256:32a8705c7a16`

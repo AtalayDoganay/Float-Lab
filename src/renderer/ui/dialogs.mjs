@@ -1,5 +1,5 @@
-// Start (Resume / Restart), confirm-restart, reference-photo, and the read-only
-// GilderCommands "Control" window.
+// Confirm-restart, reference-photo, and the read-only GilderCommands "Control"
+// window. Resume and Start over live on the Home screen, not in a dialog.
 import { el, replace } from './dom.mjs';
 import { REFERENCE_IMAGES, IMAGE_DIR } from '../content/references.mjs';
 
@@ -11,7 +11,6 @@ const GILDER_COMMANDS = [
 ];
 
 export function mountDialogs({ dispatch }) {
-  const start = document.getElementById('start-dialog');
   const confirm = document.getElementById('confirm-dialog');
   const photo = document.getElementById('photo-dialog');
   const control = document.getElementById('control-dialog');
@@ -20,7 +19,6 @@ export function mountDialogs({ dispatch }) {
     d.addEventListener('cancel', (e) => { e.preventDefault(); dispatch({ type: d === photo ? 'close-photo' : 'term-button', name: 'control' }); });
     d.addEventListener('click', (e) => { if (e.target === d) dispatch({ type: d === photo ? 'close-photo' : 'term-button', name: 'control' }); });
   }
-  start.addEventListener('cancel', (e) => e.preventDefault());
   confirm.addEventListener('cancel', (e) => { e.preventDefault(); dispatch({ type: 'restart-cancel' }); });
 
   function sync(dialog, shouldOpen, build) {
@@ -30,19 +28,12 @@ export function mountDialogs({ dispatch }) {
 
   function update(state) {
     const d = state.dialogs;
-    sync(start, d.start, () => el('div', { class: 'dialog-body' },
-      el('h2', { id: 'start-title', text: 'Welcome back' }),
-      el('p', { class: 'lede', text: 'Saved progress was found on this computer. Resume where you left off, or start the course over. Any playback resumes paused.' }),
-      el('div', { class: 'dialog-actions' },
-        el('button', { type: 'button', class: 'btn btn-primary', 'data-control': 'resume', text: 'Resume learning', onclick: () => dispatch({ type: 'resume' }) }),
-        el('button', { type: 'button', class: 'btn', 'data-control': 'restart', text: 'Restart learning', onclick: () => dispatch({ type: 'restart-request' }) }))));
-
     sync(confirm, d.confirm, () => el('div', { class: 'dialog-body' },
-      el('h2', { id: 'confirm-title', text: 'Restart learning?' }),
-      el('p', { class: 'lede', text: 'This clears completed lessons, answers, review topics, and exercise steps on this computer. Workspace settings return to their defaults. This cannot be undone.' }),
+      el('h2', { id: 'confirm-title', text: 'Start over?' }),
+      el('p', { class: 'lede', text: 'This clears every finished lesson and step, the classic question and exercise records, and the chosen level on this computer. Workspace settings return to their defaults. A version-1 backup file, if one exists, is left alone. This cannot be undone.' }),
       el('div', { class: 'dialog-actions' },
         el('button', { type: 'button', class: 'btn', text: 'Keep my progress', onclick: () => dispatch({ type: 'restart-cancel' }) }),
-        el('button', { type: 'button', class: 'btn btn-primary', text: 'Restart learning', onclick: () => dispatch({ type: 'restart-confirm' }) }))));
+        el('button', { type: 'button', class: 'btn btn-primary', text: 'Start over', onclick: () => dispatch({ type: 'restart-confirm' }) }))));
 
     sync(photo, Boolean(d.photo), () => {
       const meta = REFERENCE_IMAGES.find((i) => i.file === d.photo);
