@@ -102,6 +102,53 @@ export function createSmokeRunner({ session, store }) {
   })()`);
 
   async function scenarioFirst(js) {
+    // Rosie's welcome comes before anything else on a fresh start: she is
+    // the dialog, over a dimmed Home, and her artwork comes from the app's
+    // own files, drawn in WebGL or shown as the bundled sprite.
+    const guide = () => js('window.roseflowDebug.guide()');
+    let g = await guide();
+    check('the welcome is open on a fresh start', g && g.scene === 'welcome', g && g.scene);
+    check('her rendering mode is recorded', g && (g.mode === 'webgl' || g.mode === 'sprite'), g && g.mode);
+    const bubble = await js('(() => { const b = document.getElementById("rosie-bubble"); const c = b && b.querySelector(".welcome-count"); return b ? { role: b.getAttribute("role"), modal: b.getAttribute("aria-modal"), label: b.getAttribute("aria-label"), inert: document.querySelector("main").inert, count: c ? c.textContent : null, modalLayer: document.getElementById("guide-layer").classList.contains("is-modal") } : null; })()');
+    check('the welcome is a modal dialog in her bubble and the page behind it is inert', bubble && bubble.role === 'dialog' && bubble.modal === 'true' && bubble.inert === true && bubble.count === '1 of 3' && bubble.modalLayer === true, bubble);
+    let art = null;
+    for (let i = 0; i < 20; i += 1) {
+      art = await js('(() => { const r = document.getElementById("rosie"); const c = r && r.querySelector("canvas"); const i = r && r.querySelector("img.mascot"); if (c) return { kind: "canvas", width: c.width }; if (i) return { kind: "img", complete: i.complete, width: i.naturalWidth, src: i.getAttribute("src") }; return null; })()');
+      if (art && (art.kind === 'canvas' || art.complete)) break;
+      await sleep(100);
+    }
+    check('her artwork is bundled and drawn', art && (art.kind === 'canvas' ? art.width > 0 : (art.complete && art.width > 0 && /assets\/mascot\/rosie-/.test(art.src))), art);
+    await js(d({ type: 'welcome-next' }));
+    await js(d({ type: 'welcome-next' }));
+    check('two Next presses reach the third welcome beat', (await js('document.querySelector("#rosie-bubble .welcome-count").textContent')) === '3 of 3');
+    check('on the last beat she is anchored to Start with Basic', JSON.stringify((await guide()).anchor) === JSON.stringify({ kind: 'control', id: 'start-learning' }));
+    await js(d({ type: 'welcome-next' }));
+    let state = await js('window.roseflowDebug.getState()');
+    g = await guide();
+    const freed = await js('({ inert: document.querySelector("main").inert, modal: document.getElementById("guide-layer").classList.contains("is-modal"), role: document.getElementById("rosie-bubble").getAttribute("role") })');
+    check('Let’s go closes the welcome, remembers it, and frees the page', state.guide.open === false && state.guide.welcomed === true && g.scene !== 'welcome' && freed.inert === false && freed.modal === false && freed.role !== 'dialog', { guide: state.guide, scene: g.scene, freed });
+    const startBasic = await js('document.querySelector(\'[data-fid="start-basic"]\') && document.querySelector(\'[data-fid="start-basic"]\').textContent');
+    check('home offers one primary action, Start with Basic', startBasic === 'Start with Basic', startBasic);
+    check('focus moves to Home’s primary action when the welcome closes', (await js('document.activeElement && document.activeElement.dataset.fid')) === 'start-basic', await js('document.activeElement && document.activeElement.outerHTML.slice(0, 80)'));
+    const statusBubble = await js('({ role: document.getElementById("rosie-bubble").getAttribute("role"), live: document.getElementById("rosie-bubble").getAttribute("aria-live") })');
+    check('on Home her bubble is a polite status region, so her words are announced', statusBubble.role === 'status' && statusBubble.live === 'polite', statusBubble);
+    await js(d({ type: 'welcome-open' }));
+    check('Meet Rosie again reopens the welcome at its first beat', (await guide()).scene === 'welcome' && (await js('document.querySelector("#rosie-bubble .welcome-count").textContent')) === '1 of 3');
+    check('the welcome buttons carry no tooltip hook', (await js('document.querySelectorAll("#rosie-bubble [data-control]").length')) === 0);
+    await js('document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }))');
+    check('Escape closes the welcome', (await guide()).scene !== 'welcome');
+    check('focus returns to Home’s primary action after Escape', (await js('document.activeElement && document.activeElement.dataset.fid')) === 'start-basic');
+    // Review Focus 4: a lost WebGL context drops her to the sprite, without an error.
+    if ((await guide()).mode === 'webgl') {
+      const lost = await js('(() => { const c = document.querySelector("#rosie canvas"); const gl = c && (c.getContext("webgl2") || c.getContext("webgl")); const ext = gl && gl.getExtension("WEBGL_lose_context"); if (ext) ext.loseContext(); return Boolean(ext); })()');
+      let mode = null;
+      for (let i = 0; i < 20 && mode !== 'sprite'; i += 1) { await sleep(100); mode = (await guide()).mode; }
+      check('a lost WebGL context falls back to the sprite', lost && mode === 'sprite' && (await js('Boolean(document.querySelector("#rosie img.mascot"))')) === true, { lost, mode });
+    } else {
+      check('a lost WebGL context falls back to the sprite (skipped: already in sprite mode)', true, 'sprite mode from the start');
+    }
+    await js(d({ type: 'welcome-done' }));
+
     // Home: the three levels, named exactly, and no Continue card yet.
     const levelNames = await js('[...document.querySelectorAll(\'[data-control="level-choice"] h2\')].map((n) => n.textContent)');
     check('home presents Basic, intermediate, and I hate my life', JSON.stringify(levelNames) === JSON.stringify(['Basic', 'intermediate', 'I hate my life']), levelNames);
@@ -112,7 +159,7 @@ export function createSmokeRunner({ session, store }) {
 
     // Level map grouped by function with a clear starting point.
     await js(d({ type: 'choose-level', level: 'basic' }));
-    let state = await js('window.roseflowDebug.getState()');
+    state = await js('window.roseflowDebug.getState()');
     check('choosing Basic opens its lesson map', state.view === 'level' && state.level === 'basic');
     const groups = await js('[...document.querySelectorAll(".group h2")].map((n) => n.textContent)');
     check('Basic groups topics by function', ['The interface', 'Graphs', 'Terminology', 'Functions', 'Hydraulics', 'Assignments'].every((g) => groups.includes(g)), groups);
@@ -123,6 +170,10 @@ export function createSmokeRunner({ session, store }) {
     await js(d({ type: 'begin-here' }));
     let info = await stepInfo(js);
     check('Begin here opens the first lesson at step 1', info && info.lessonId === 'b-system' && info.index === 0 && info.total === 5, info);
+    check('the first step opens in its look beat with Rosie\'s words in her bubble', info.beat === 'look' && /PC•MACs is where the team builds the show/.test(await js('document.getElementById("rosie-bubble").textContent')), info.beat);
+    check('More about this step is closed by default', (await js('document.querySelector("#panel details.more").open')) === false);
+    const announcer = await js('(() => { const a = document.getElementById("panel-announcer"); window.__announcer = a; return a ? { text: a.textContent, live: a.getAttribute("aria-live"), inPanel: document.querySelectorAll("#panel [aria-live]").length } : null; })()');
+    check('one persistent live region, outside the rebuilt panel, announces the step', announcer && announcer.live === 'polite' && announcer.inPanel === 0 && announcer.text.includes('PC•MACs / show'), announcer);
     const count = await js('document.querySelector(\'[data-ref="step-count"]\').textContent');
     check('step count is visible and accurate', count === 'Step 1 of 5', count);
     check('only the PC•MACs frame is revealed on the first step', (await partHidden(js, 'ruler')) === true && (await partHidden(js, 'title')) === false);
@@ -145,8 +196,13 @@ export function createSmokeRunner({ session, store }) {
     check('finishing the last step returns to the map and records the lesson', finish === 'finished' && state.view === 'level' && state.learning.completedLessons.includes('b-system'), { finish, view: state.view });
     check('reused classic questions are mirrored into the version-1 record', state.course.answered.includes('l01q1') && state.course.answered.includes('l01q2') && state.course.completedLessons.includes('l01'), state.course);
     check('a wrong try marks the lesson for review', state.learning.missedLessons.includes('b-system') && state.course.missedLessons.includes('l01'));
-    const finishedNote = await js('document.querySelector(".finished-note") && document.querySelector(".finished-note").textContent');
+    const finishedNote = await js('document.getElementById("rosie-bubble").textContent');
     check('the map says which lesson was finished', typeof finishedNote === 'string' && finishedNote.includes('How a click becomes movement'), finishedNote);
+    await js(d({ type: 'go-home' }));
+    const midCard = await js('document.querySelector(".continue-card") && document.getElementById("rosie-bubble").textContent');
+    check('Home mid-session offers Continue for the current lesson, not the first-visit copy', typeof midCard === 'string' && midCard.includes('How a click becomes movement') && !midCard.includes('Welcome back') && (await js('Boolean(document.querySelector(\'[data-control="resume"]\'))')) === true, midCard);
+    await js(d({ type: 'resume' }));
+    check('Continue mid-session returns to the current lesson', (await js('window.roseflowDebug.getState()')).view === 'lesson');
 
     // Timeline lesson: progressive disclosure, a demonstration, a wrong practice action, a correction.
     await js(d({ type: 'start-lesson', id: 'b-timeline-graph' }));
@@ -161,10 +217,13 @@ export function createSmokeRunner({ session, store }) {
     state = await js('window.roseflowDebug.getState()');
     check('the demonstration runs to its end and reports its outcome', state.lesson.demo.running === false && /removed it/.test(state.lesson.demo.note), state.lesson.demo);
     check('the demonstration leaves Light 1 as it was', JSON.stringify(state.sim.lights['light-1']) === JSON.stringify(lightBefore));
+    info = await stepInfo(js);
+    check('after the demonstration the panel is in the watch beat with the outro and Next', info.beat === 'watch' && info.demoFinished === true, info);
     await js(d({ type: 'step-next' }));
     info = await stepInfo(js);
     state = await js('window.roseflowDebug.getState()');
     check('the practice step starts from its setup state (Light 1 all OFF)', info.kind === 'practice' && state.sim.lights['light-1'].every((b) => b === false));
+    check('a practice step opens in its look beat', info.beat === 'look', info.beat);
     const menuGreyed = await js('(() => { document.querySelector(\'[data-menu="edit"]\').click(); const item = [...document.querySelectorAll(".pc-item")].find((n) => n.textContent.includes("Set Digitals On")); const greyed = item.disabled; document.body.click(); return greyed; })()');
     check('Edit ▸ Set Digitals On is greyed until a digital is selected for a stretch', menuGreyed === true);
     // A wrong action through the real Edit View: RightClick-and-slide on Light 1 from 4 s to 5 s.
@@ -172,7 +231,10 @@ export function createSmokeRunner({ session, store }) {
     state = await js('window.roseflowDebug.getState()');
     check('RightClick-and-slide on the digital row draws Light 1 ON', JSON.stringify(onSpans(state.sim.lights['light-1'])) === JSON.stringify([[120, 150]]), onSpans(state.sim.lights['light-1']));
     check('an incorrect practice action gets a specific correction', state.lesson.feedback && state.lesson.feedback.ok === false && /ON from 00:00:04\.00 to 00:00:05\.00/.test(state.lesson.feedback.message), state.lesson.feedback);
+    check('the live region announces the correction without being re-created', (await js('Boolean(window.__announcer) && document.getElementById("panel-announcer") === window.__announcer && /ON from 00:00:04\\.00/.test(window.__announcer.textContent)')) === true);
+    check('the correction keeps the instruction under it', (await js('document.getElementById("rosie-bubble").textContent')).includes('Select Light 1 from 5 s to 6 s'));
     check('Next stays locked after a wrong action', (await stepInfo(js)).canAdvance === false);
+    check('acting in the windows during the look beat moves the panel to the try beat', (await stepInfo(js)).beat === 'try');
     // Correct it: RightClick on the ON stretch undraws; then select 5-6 s on the row and use the Edit menu.
     await dragOn(js, '.ev-digital', 2, 4, 5, 14);
     await dragOn(js, '.ev-digital', 0, 5, 6, 14);
@@ -184,6 +246,30 @@ export function createSmokeRunner({ session, store }) {
     check('a passed practice unlocks Next without advancing by itself', (await stepInfo(js)).canAdvance === true && (await stepInfo(js)).index === 2);
     const highlighted = await js('document.querySelector(".is-target") && document.querySelector(".is-target").dataset.control');
     check('the highlight follows the current step\'s control', highlighted === 'digital-pane', highlighted);
+    // Back while a demonstration runs cancels it, restores the show data, and
+    // opens the previous step at its first beat.
+    await js(d({ type: 'step-back' }));
+    const lightsBefore = (await js('window.roseflowDebug.getState()')).sim.lights['light-1'].slice();
+    await js(d({ type: 'demo-start' }));
+    await sleep(1200);
+    check('Show me puts the panel in the watch beat while the demonstration runs', (await stepInfo(js)).beat === 'watch');
+    await js(d({ type: 'step-back' }));
+    state = await js('window.roseflowDebug.getState()');
+    info = await stepInfo(js);
+    check('Back during a demonstration cancels it, restores Light 1, and opens the previous step at its first beat', info.index === 0 && state.lesson.demo.running === false && info.beat === 'look' && JSON.stringify(state.sim.lights['light-1']) === JSON.stringify(lightsBefore), { index: info.index, running: state.lesson.demo.running, beat: info.beat });
+    await js(d({ type: 'step-next' }));
+    await js(d({ type: 'step-next' }));
+
+    // Keyboard focus survives a demonstration: Show me was focused, the panel
+    // rebuilt it as a disabled button, and when the demo ends focus lands on Next.
+    await js(d({ type: 'step-back' }));
+    check('a finished step with a demonstration still offers Watch again', (await js('Boolean(document.querySelector(\'#panel [data-fid="secondary-watch-again"]\'))')) === true);
+    await js('(() => { const b = document.querySelector(\'#panel [data-fid="secondary-watch-again"]\'); b.focus(); b.click(); })()');
+    await sleep(3000);
+    const afterDemoFocus = await js('document.activeElement ? (document.activeElement.dataset.fid || document.activeElement.tagName) : null');
+    check('after Show me ends, focus lands on Next instead of being lost', afterDemoFocus === 'step-next', afterDemoFocus);
+    await js(d({ type: 'step-next' }));
+
     await js(d({ type: 'step-back' }));
     await js(d({ type: 'step-next' }));
     info = await stepInfo(js);
@@ -261,11 +347,114 @@ export function createSmokeRunner({ session, store }) {
     check('saved file is schema 3 with the lesson location', v && v.schemaVersion === 3 && v.location.view === 'lesson' && v.location.level === 'basic' && v.location.lessonId === 'b-timeline-graph' && v.location.stepIndex === 3, v && v.location);
     check('saved file holds finished steps, the finished lesson, and the mirrored classic record', v && v.learning.completedLessons.includes('b-system') && v.learning.completedSteps.includes('b-timeline-graph:turn-on-5') && v.course.answered.includes('l01q1'), v && v.learning);
     check('saved show data holds the practised Light 1 span, and playback is never saved as running', v && JSON.stringify(v.settings.lights['light-1']) === '[[150,180]]' && v.settings.axis === 2 && v.settings.console[2] === 100 && v.settings.command === 100, v && v.settings);
+
+    // Keyboard focus survives a pass: Check was focused, the primary became Next.
+    await js(d({ type: 'start-lesson', id: 'b-channels', stepIndex: 2 }));
+    await js(d({ type: 'beat-try' }));
+    await js('document.querySelector(\'#panel [data-fid="primary"]\').focus()');
+    await js(d({ type: 'select-channel', id: 'light-2' }));
+    const afterPassFocus = await js('document.activeElement ? (document.activeElement.dataset.fid || document.activeElement.tagName) : null');
+    check('after a pass, focus moves from the vanished Check to Next', afterPassFocus === 'step-next' && (await stepInfo(js)).done === true, afterPassFocus);
+    // Leaving the lesson while a demonstration runs cancels it.
+    await js(d({ type: 'start-lesson', id: 'b-timeline-graph', stepIndex: 1 }));
+    const selectionBefore = JSON.stringify((await js('window.roseflowDebug.getState()')).sim.selection);
+    await js(d({ type: 'demo-start' }));
+    await sleep(200);
+    await js(d({ type: 'explore' }));
+    state = await js('window.roseflowDebug.getState()');
+    check('leaving for Explore during a demonstration cancels it and restores the selection', state.lesson.demo.running === false && state.lesson.beat === 'look' && JSON.stringify(state.sim.selection) === selectionBefore, { running: state.lesson.demo.running, beat: state.lesson.beat });
+    check('the explore panel keeps its heading', (await js('document.querySelector("#panel h2") && document.querySelector("#panel h2").textContent')) === 'All the windows');
+    // ---- Rosie, the floating guide: where she goes and what she must never cover.
+    const guideDbg = () => js('window.roseflowDebug.guide()');
+    const hit = (a, b) => Boolean(a && b) && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const rectOf = (selector) => js(`(() => { const n = document.querySelector('${selector}'); if (!n) return null; const r = n.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()`);
+    const targetNode = (id) => `(document.querySelector('[data-target="${id}"]') || document.querySelector('.desk [data-control="${id}"]') || document.querySelector('[data-control="${id}"]'))`;
+    await js(d({ type: 'go-home' }));
+    await sleep(1500);
+    let gd = await guideDbg();
+    const resumeRect = await rectOf('[data-fid="resume"]');
+    check('Home anchors her to the primary action, beside it', gd.anchor.kind === 'control' && gd.anchor.id === 'resume' && gd.resolved === 'control' && !hit(gd.visible, resumeRect) && !hit(gd.bubbleRect, resumeRect), { anchor: gd.anchor, resolved: gd.resolved, visible: gd.visible, resumeRect });
+    await js(d({ type: 'start-lesson', id: 'b-interface', stepIndex: 1 }));
+    await sleep(1500);
+    gd = await guideDbg();
+    check('a lesson step anchors her to its target and she does not overlap it', gd.anchor.id === 'menu-realtime' && gd.resolved === 'control' && gd.flying === false && !hit(gd.visible, gd.anchorRect) && !hit(gd.bubbleRect, gd.anchorRect), { anchor: gd.anchor, resolved: gd.resolved, flying: gd.flying, visible: gd.visible, anchorRect: gd.anchorRect, bubble: gd.bubbleRect });
+    check('the panel keeps a dock for her and no longer carries the speech card', (await js('Boolean(document.getElementById("guide-dock")) && !document.querySelector("#panel .step-guide")')) === true);
+    let before = gd;
+    await js(d({ type: 'step-next' }));
+    await sleep(1500);
+    gd = await guideDbg();
+    check('her position changes when the target changes', gd.anchor.id === 'time-ruler' && gd.flights === before.flights + 1 && Math.hypot(gd.position.x - before.position.x, gd.position.y - before.position.y) > 40, { from: before.position, to: gd.position, flights: [before.flights, gd.flights] });
+    check('her bubble carries the beat’s text', /ruler/.test(gd.bubbleText), gd.bubbleText.slice(0, 80));
+    check('the layer is transparent to the pointer outside the welcome', (await js(`(() => { const v = ${JSON.stringify(gd.visible)}; const n = document.elementFromPoint(v.x + v.w / 2, v.y + v.h / 2); return Boolean(n) && !n.closest('#guide-layer'); })()`)) === true);
+    // Review Focus 1: a target with no box puts her at the dock, not at (0, 0).
+    await js(`${targetNode('time-ruler')}.hidden = true`);
+    await sleep(500);
+    gd = await guideDbg();
+    check('a target with no size falls back to the dock', gd.resolved === 'dock' && gd.position.y > 0, { resolved: gd.resolved, position: gd.position });
+    await js(`${targetNode('time-ruler')}.hidden = false`);
+    await sleep(1500);
+    // Review Focus 2: the handbook narrows the desk and moves the ruler; she follows without a new talk or flight.
+    before = await guideDbg();
+    await js(d({ type: 'handbook-toggle' }));
+    await sleep(1500);
+    gd = await guideDbg();
+    check('a shifted target re-anchors her without a new talk or flight', gd.resolved === 'control' && gd.talks === before.talks && gd.flights === before.flights && Math.abs(gd.position.x - before.position.x) > 20, { before: before.position, after: gd.position, talks: [before.talks, gd.talks], flights: [before.flights, gd.flights] });
+    await js(d({ type: 'handbook-close' }));
+    await sleep(800);
+    // Review Focus 3: thirty playback ticks a second never reach her.
+    before = await guideDbg();
+    await js(d({ type: 'play' }));
+    await sleep(700);
+    await js(d({ type: 'stop' }));
+    gd = await guideDbg();
+    check('playback does not make her fly or talk', gd.talks === before.talks && gd.flights === before.flights, { talks: [before.talks, gd.talks], flights: [before.flights, gd.flights] });
+    const lessonBubble = await js('({ role: document.getElementById("rosie-bubble").getAttribute("role"), live: document.getElementById("rosie-bubble").getAttribute("aria-live") })');
+    check('in a lesson her bubble is not a live region (the panel announcer speaks once)', lessonBubble.role === null && lessonBubble.live === null, lessonBubble);
+    // An open PC•MACs menu must paint above her and her bubble: the layer sits below the menus in the root stacking order.
+    const stacking = await js(`(() => {
+      const z = (n) => { const v = getComputedStyle(n).zIndex; return v === 'auto' ? null : Number(v); };
+      const menu = document.querySelector('.pc-menu');
+      const contexts = [];
+      for (let n = menu.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if ((cs.position !== 'static' && cs.zIndex !== 'auto') || cs.opacity !== '1' || cs.transform !== 'none' || cs.filter !== 'none' || cs.isolation === 'isolate' || cs.mixBlendMode !== 'normal' || cs.willChange !== 'auto') contexts.push(n.tagName.toLowerCase() + '.' + n.className);
+      }
+      return { layer: z(document.getElementById('guide-layer')), menu: z(menu), contexts };
+    })()`);
+    check('an open menu paints above her: the layer sits below the menus in the root stacking order', stacking.layer !== null && stacking.menu !== null && stacking.layer < stacking.menu && stacking.contexts.length === 0, stacking);
+    // Her loop runs while the page is visible and stops when it is hidden (driven through the debug hook).
+    const f0 = (await guideDbg()).frames;
+    await sleep(250);
+    const f1 = (await guideDbg()).frames;
+    await js('window.roseflowDebug.guideVisible(false)');
+    await sleep(150);
+    const f2 = (await guideDbg()).frames;
+    await sleep(300);
+    const f3 = (await guideDbg()).frames;
+    await js('window.roseflowDebug.guideVisible(true)');
+    await sleep(300);
+    const f4 = (await guideDbg()).frames;
+    check('her loop runs while the page is visible and stops while it is hidden', typeof f0 === 'number' && f1 > f0 && f3 === f2 && f4 > f3, { f0, f1, f2, f3, f4 });
+    // Reduced motion: placed at once, no flight.
+    await js('window.roseflowDebug.guideReduced(true)');
+    await js(d({ type: 'step-next' }));
+    await sleep(220);
+    gd = await guideDbg();
+    check('with reduced motion she is placed at once, without a flight', gd.reduced === true && gd.flying === false && gd.anchor.id === 'analog-pane', { reduced: gd.reduced, flying: gd.flying, anchor: gd.anchor });
+    await js('window.roseflowDebug.guideReduced(null)');
+    await js(d({ type: 'step-back' }));
+    await sleep(900);
+
+    // Back on the saved step for the relaunch scenario.
+    await js(d({ type: 'start-lesson', id: 'b-timeline-graph', stepIndex: 3 }));
+    await js(d({ type: 'stop' }));
+    check('the saved step is written again for the relaunch', (await js('window.roseflowDebug.flushSave()')).ok === true);
   }
 
   async function scenarioResume(js) {
-    const card = await js('document.querySelector(".continue-card") && document.querySelector(".continue-card").textContent');
-    check('home offers Continue when progress exists', typeof card === 'string' && card.includes('Reading the timeline') && card.includes('step 4 of 5'), card);
+    check('no welcome dialog for a returning learner', (await js('window.roseflowDebug.guide().scene')) !== 'welcome');
+    const card = await js('document.querySelector(".continue-card") && document.getElementById("rosie-bubble").textContent');
+    check('home offers Continue when progress exists, from Rosie', typeof card === 'string' && card.includes('Welcome back') && card.includes('Reading the timeline') && card.includes('step 4 of 5'), card);
     check('home still shows the three levels', (await js('document.querySelectorAll(\'[data-control="level-choice"]\').length')) === 3);
     await js(d({ type: 'resume' }));
     const state = await js('window.roseflowDebug.getState()');
@@ -287,11 +476,15 @@ export function createSmokeRunner({ session, store }) {
     await sleep(100);
     after = await js('window.roseflowDebug.getState()');
     check('confirmed Start over clears progress and returns home', after.view === 'home' && after.learning.completedSteps.length === 0 && after.course.answered.length === 0 && after.level === null, { view: after.view });
+    check('a confirmed Start over begins with the welcome again', (await js('window.roseflowDebug.guide().scene')) === 'welcome');
+    await js(d({ type: 'welcome-done' }));
     const onDisk = await store.current.load();
     check('Start over wrote a fresh empty document', onDisk.ok && onDisk.value && onDisk.value.learning.completedSteps.length === 0 && onDisk.value.location.level === null);
   }
 
   async function scenarioMalformed(js) {
+    check('a fresh start after quarantine shows the welcome', (await js('window.roseflowDebug.guide().scene')) === 'welcome');
+    await js(d({ type: 'welcome-done' }));
     const state = await js('window.roseflowDebug.getState()');
     check('malformed file did not crash and started fresh', state.learning.completedLessons.length === 0 && state.view === 'home');
     check('recovery notice is recorded', state.persistence.recovered && state.persistence.recovered.reason === 'invalid-json', state.persistence);
@@ -300,6 +493,9 @@ export function createSmokeRunner({ session, store }) {
   }
 
   async function scenarioSaveFail(js) {
+    check('the welcome opens even when the progress file cannot be saved', (await js('window.roseflowDebug.guide().scene')) === 'welcome');
+    await js(d({ type: 'welcome-done' }));
+    check('the welcome closes without an error when saving fails', (await js('window.roseflowDebug.guide().scene')) !== 'welcome');
     await js(d({ type: 'choose-level', level: 'basic' }));
     await js(d({ type: 'begin-here' }));
     const saved = await js('window.roseflowDebug.flushSave()');
@@ -314,6 +510,7 @@ export function createSmokeRunner({ session, store }) {
   // Seeded by scripts/smoke.mjs with a version-1 file: one classic question
   // answered and two exercise steps finished.
   async function scenarioLegacy(js) {
+    check('a migrated version-1 file never shows the welcome', (await js('window.roseflowDebug.guide().scene')) !== 'welcome');
     const state = await js('window.roseflowDebug.getState()');
     check('a version-1 file is migrated and reported', state.migratedInfo && state.migratedInfo.fromSchemaVersion === 1 && state.persistence.migrated && typeof state.persistence.migrated.backupPath === 'string', { migratedInfo: state.migratedInfo, migrated: state.persistence.migrated });
     let backupExists = false;
@@ -348,12 +545,13 @@ export function createSmokeRunner({ session, store }) {
   // Seeded by scripts/smoke.mjs with a version-2 file (the guided-learning
   // build): mid-lesson in b-timeline-graph with blocks 2, 3, and 5 ON.
   async function scenarioLegacy2(js) {
+    check('a migrated version-2 file never shows the welcome', (await js('window.roseflowDebug.guide().scene')) !== 'welcome');
     const state = await js('window.roseflowDebug.getState()');
     check('a version-2 file is migrated and backed up as progress.v2-backup.json', state.persistence.migrated && state.persistence.migrated.fromSchemaVersion === 2 && /progress\.v2-backup\.json$/.test(state.persistence.migrated.backupPath), state.persistence.migrated);
     check('finished lessons and steps survive', state.learning.completedLessons.includes('b-system') && state.learning.completedSteps.includes('b-timeline-graph:seconds'), state.learning);
     check('blocks 2, 3, and 5 became Light 1 ON from 2 s to 4 s and 5 s to 6 s', JSON.stringify(onSpans(state.sim.lights['light-1'])) === '[[60,120],[150,180]]', onSpans(state.sim.lights['light-1']));
     check('the saved command became axis 2’s Soft Console value', state.sim.axis === 2 && state.sim.console[2] === 100 && state.sim.command === 100);
-    const card = await js('document.querySelector(".continue-card") && document.querySelector(".continue-card").textContent');
+    const card = await js('document.querySelector(".continue-card") && document.getElementById("rosie-bubble").textContent');
     check('Continue still offers the saved lesson and step', typeof card === 'string' && card.includes('Reading the timeline'), card);
     await js(d({ type: 'resume' }));
     const info = await stepInfo(js);
@@ -369,6 +567,7 @@ export function createSmokeRunner({ session, store }) {
   // Solves the practice steps that use the recreated windows, the way a learner
   // would, and checks each one passes only after the right action.
   async function scenarioPractice(js) {
+    await js(d({ type: 'welcome-done' }));
     const feedback = async () => (await js('window.roseflowDebug.getState()')).lesson.feedback;
     // Opens a lesson at the step with this id (with its setup applied).
     const open = async (id, stepId) => {
@@ -498,15 +697,37 @@ export function createSmokeRunner({ session, store }) {
       await fs.writeFile(file, image.toPNG());
       check(`captured ${name}`, !image.isEmpty(), image.getSize());
     };
+    await shot('00-welcome.png');
+    await js(d({ type: 'welcome-next' }));
+    await js(d({ type: 'welcome-next' }));
+    await sleep(900);
+    await shot('00b-welcome-beat3.png');
+    await js(d({ type: 'welcome-done' }));
     await shot('01-home.png');
     await js(d({ type: 'choose-level', level: 'basic' }));
     await shot('02-level-map.png');
     await js(d({ type: 'begin-here' }));
     await shot('03-first-step.png');
+    // Mid-flight: captured about a quarter of a second after the step changes.
+    await js(d({ type: 'start-lesson', id: 'b-interface', stepIndex: 1 }));
+    await sleep(120);
+    const flying = await win.webContents.capturePage();
+    await fs.writeFile(path.join(dir, '03c-flying.png'), flying.toPNG());
+    check('captured 03c-flying.png', !flying.isEmpty());
+    await sleep(900);
+    await js(d({ type: 'start-lesson', id: 'b-timeline-graph', stepIndex: 1 }));
+    await js('window.roseflowDebug.runDemo()');
+    await shot('03b-after-demo.png');
     await js(d({ type: 'start-lesson', id: 'b-timeline-graph', stepIndex: 2 }));
+    await js(d({ type: 'beat-try' }));
+    await shot('04a-try-beat.png');
     await dragOn(js, '.ev-digital', 2, 4, 5, 14);
     await dragOn(js, '.ev-digital', 0, 3.5, 5.5, 14);
     await shot('04-practice-correction.png');
+    await dragOn(js, '.ev-digital', 2, 4, 5, 14);
+    await dragOn(js, '.ev-digital', 0, 5, 6, 14);
+    await js('(() => { document.querySelector(\'[data-menu="edit"]\').click(); [...document.querySelectorAll(".pc-item")].find((n) => n.textContent.includes("Set Digitals On")).click(); })()');
+    await shot('04b-passed.png');
     await js('document.querySelector(\'[data-menu="edit"]\').click()');
     await shot('05-edit-menu.png');
     await js('document.body.click()');
@@ -537,6 +758,28 @@ export function createSmokeRunner({ session, store }) {
     await shot('13-explore-zoomed-in.png');
     await js(d({ type: 'go-progress' }));
     await shot('14-progress.png');
+    // The smallest supported window: the guide card and the Back / Next row must fit.
+    await js(d({ type: 'start-lesson', id: 'b-timeline-graph', stepIndex: 2 }));
+    await js(d({ type: 'lesson-reset' }));
+    await js(d({ type: 'start-lesson', id: 'b-timeline-graph', stepIndex: 2 }));
+    win.setSize(1024, 680);
+    await dragOn(js, '.ev-digital', 2, 4, 5, 14);
+    await shot('15-small-window-1024x680-correction.png');
+    // Review Focus 5: a target at the far right of the smallest window keeps the bubble inside and off the target.
+    await js(d({ type: 'start-lesson', id: 'b-terminal', stepIndex: 3 }));
+    await sleep(1500);
+    const small = await js('window.roseflowDebug.guide()');
+    const vp = await js('({ w: window.innerWidth, h: window.innerHeight })');
+    const inside = (r) => Boolean(r) && r.x >= 0 && r.y >= 0 && r.x + r.w <= vp.w + 1 && r.y + r.h <= vp.h + 1;
+    const hit = (a, b) => Boolean(a && b) && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const rows = await js('[...document.querySelectorAll("#panel .beat-actions, #panel .nav-row")].map((n) => { const r = n.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })');
+    check('at 1024 by 680 the bubble stays inside the window and off the target', small.resolved === 'control' && inside(small.bubbleRect) && inside(small.visible) && !hit(small.bubbleRect, small.anchorRect) && !hit(small.visible, small.anchorRect), { vp, bubble: small.bubbleRect, visible: small.visible, target: small.anchorRect, resolved: small.resolved });
+    check('at 1024 by 680 the bubble keeps off the panel’s action rows', rows.length === 2 && rows.every((r) => !hit(small.bubbleRect, r)), { bubble: small.bubbleRect, rows });
+    await shot('15b-small-window-terminal-target.png');
+    await js(d({ type: 'welcome-open' }));
+    await shot('16-small-window-1024x680-welcome.png');
+    await js(d({ type: 'welcome-done' }));
+    win.setSize(1440, 900);
   }
 
   return { run };

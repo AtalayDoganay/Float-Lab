@@ -1,5 +1,10 @@
 # Verification record
 
+The newest record is `docs/VERIFICATION-2026-10-24.md` (Rosie in 3D, the
+floating guide). Before it, `docs/VERIFICATION-2026-10-23.md` (Rosie, the
+guide, and the simplified trainer). The record below is for the October 7,
+2026 PC•MACs interface recreation and is unchanged.
+
 Date: October 7, 2026 (PC•MACs interface recreation, One File task revision 1
 “Recreate the actual PC•MACs interface in the guided trainer”, prepared
 October 7, 2026 at 9:27 PM UTC-07:00). Machine: Windows 11 Home 10.0.26300,

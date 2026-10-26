@@ -9,6 +9,11 @@
   <script type="module" src="app.mjs"></script>
 </head>
 <body>
+  <div id="guide-layer" hidden>
+    <div id="welcome-backdrop" hidden></div>
+    <div id="rosie" aria-hidden="true"></div>
+    <div id="rosie-bubble" class="rosie-bubble" hidden></div>
+  </div>
   <header class="identity">
     <div class="identity-name">
       <strong>Roseflow PC Mac Training</strong>
@@ -27,6 +32,7 @@
   <main class="shell" id="shell">
     <section id="stage" class="stage" aria-label="Start"></section>
     <aside id="panel" class="panel" aria-label="Lesson panel" hidden></aside>
+    <p id="panel-announcer" class="sr-only" role="status" aria-live="polite"></p>
     <section id="desk" class="desk" aria-label="Recreated PC•MACs windows and the simulated float" hidden>
       <div id="pcmacs" class="pcmacs"></div>
       <div id="float"></div>

@@ -21,6 +21,7 @@ module.exports = {
       /^\/\.github/,
       /^\/out/,
       /^\/\.smoke-userdata/,
+      /^\/\.superpowers/,
       /^\/forge\.config\.cjs$/,
     ],
   },

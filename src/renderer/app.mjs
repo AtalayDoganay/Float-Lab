@@ -8,6 +8,7 @@ import { LESSONS as CLASSIC_LESSONS } from './content/curriculum.mjs';
 import { EXERCISES } from './content/exercises.mjs';
 import { HANDBOOK_ENTRIES, ALIAS_GROUPS } from './content/handbook.mjs';
 import { createLessonRun, legacyKeysFor } from './logic/lesson-flow.mjs';
+import { initialBeat } from './logic/step-beats.mjs';
 import { initialTerminal, terminalKey, terminalButton } from './logic/terminal.mjs';
 import {
   FPS, FRAME_COUNT, LAST_FRAME, ANALOG_CHANNELS, DIGITAL_CHANNELS, CHANNEL_IDS, AXIS_COUNT,
@@ -27,6 +28,10 @@ import { mountLesson } from './ui/lesson.mjs';
 import { mountHandbook } from './ui/handbook.mjs';
 import { mountProgress } from './ui/progress.mjs';
 import { mountDialogs } from './ui/dialogs.mjs';
+import { mountGuideLayer } from './ui/guide-layer.mjs';
+import { guidePlan } from './logic/guide-plan.mjs';
+import * as THREE from './vendor/three/three.module.js';
+import { LINES, WELCOME } from './content/mascot.mjs';
 import { el, replace } from './ui/dom.mjs';
 
 const api = window.roseflow;
@@ -66,8 +71,11 @@ function freshSim() {
   return sim;
 }
 
+const idleDemo = () => ({ running: false, finished: false, note: '' });
+
+// `beat` is which part of the step the panel shows: look, watch, or try.
 function freshLesson() {
-  return { id: null, stepIndex: 0, feedback: null, lastChoice: null, demo: { running: false, note: '' }, justFinished: null };
+  return { id: null, stepIndex: 0, beat: 'look', feedback: null, lastChoice: null, demo: idleDemo(), justFinished: null };
 }
 
 function freshState() {
@@ -85,6 +93,8 @@ function freshState() {
     migratedInfo: null,
     saved: null,
     dialogs: { confirm: false, photo: null },
+    // Rosie's welcome: shown once on a fresh start, replayable from Home.
+    guide: { welcomed: false, open: false, step: 0 },
   };
 }
 
@@ -198,7 +208,15 @@ function cancelDemo() {
     if (demoSnapshot) restoreShow(demoSnapshot);
   }
   demoSnapshot = null;
-  state.lesson.demo = { running: false, note: '' };
+  state.lesson.demo = idleDemo();
+}
+
+// Leaving the lesson view while a demonstration runs cancels it, as Back does,
+// and the step reopens at its first beat.
+function leaveLesson() {
+  if (!state.lesson.demo.running) return;
+  cancelDemo();
+  if (lessonRun) { const c = lessonRun.current(); state.lesson.beat = initialBeat(c.step, c.done); }
 }
 
 function syncLesson() {
@@ -222,9 +240,10 @@ const SAFE_SETUP = new Set(['set-manual', 'term-reset', 'term-axis', 'term-key',
 function enterStep({ setup }) {
   const c = lessonRun.current();
   state.lesson.stepIndex = c.index;
+  state.lesson.beat = initialBeat(c.step, c.done);
   state.lesson.feedback = null;
   state.lesson.lastChoice = null;
-  state.lesson.demo = { running: false, note: '' };
+  state.lesson.demo = idleDemo();
   state.sim.note = '';
   if (!setup || c.step.kind !== 'practice' || c.done) return;
   applySetup(setup === 'safe' ? c.step.practice.setup.filter((a) => SAFE_SETUP.has(a.type)) : c.step.practice.setup);
@@ -298,6 +317,8 @@ function lessonCheck(action) {
   const c = lessonRun.current();
   const result = lessonRun.check({ sim: simForCheck(), terminal: state.terminal, action });
   state.lesson.feedback = { ok: result.ok, message: result.message };
+  // The result has its place in the try beat, however the learner got there.
+  state.lesson.beat = 'try';
   if (result.ok) recordLegacy(c.step);
   syncLesson();
   // A passed step is saved at once, whatever action passed it.
@@ -320,7 +341,9 @@ async function runDemo() {
   if (!demo || state.lesson.demo.running) return;
   const token = ++demoToken;
   demoSnapshot = snapshotShow();
-  state.lesson.demo = { running: true, note: demo.intro };
+  state.lesson.demo = { running: true, finished: false, note: demo.intro };
+  state.lesson.beat = 'watch';
+  state.lesson.feedback = null;
   render();
   for (const a of demo.actions) {
     if (token !== demoToken) return;
@@ -332,7 +355,7 @@ async function runDemo() {
   stopPlayback();
   restoreShow(demoSnapshot);
   demoSnapshot = null;
-  state.lesson.demo = { running: false, note: demo.outro || 'Demonstration finished. Now you try.' };
+  state.lesson.demo = { running: false, finished: true, note: demo.outro || 'Demonstration finished. Now you try.' };
   const now = lessonRun.current();
   if (now.step === c.step && now.step.kind === 'practice' && !now.done) applySetup(now.step.practice.setup);
   render();
@@ -368,6 +391,7 @@ function toProgressDoc() {
       console: [...sim.console],
     },
     migrated: state.migratedInfo,
+    guide: { welcomed: state.guide.welcomed },
   };
 }
 
@@ -390,6 +414,7 @@ function applyProgress(doc) {
   state.sim = sim;
   state.terminal = initialTerminal();
   state.migratedInfo = doc.migrated;
+  state.guide = { welcomed: doc.guide.welcomed, open: false, step: 0 };
   state.level = doc.location.level;
   state.saved = { ...doc.location };
   if (doc.location.lessonId && LESSONS_BY_ID[doc.location.lessonId]) loadLesson(doc.location.lessonId, doc.location.stepIndex, { setup: 'safe' });
@@ -437,15 +462,18 @@ function reduce(action) {
   switch (action.type) {
     // navigation
     case 'go-home':
+      leaveLesson();
       state.view = 'home';
       return null;
     case 'choose-level':
       if (!LEVEL_BY_ID[action.level]) return null;
+      leaveLesson();
       state.level = action.level;
       state.lesson.justFinished = null;
       state.view = 'level';
       return null;
     case 'open-level':
+      leaveLesson();
       state.view = state.level ? 'level' : 'home';
       return null;
     case 'begin-here': {
@@ -464,14 +492,18 @@ function reduce(action) {
       state.handbook.open = false;
       return null;
     case 'explore':
+      leaveLesson();
       state.view = 'explore';
       return null;
     case 'go-progress':
+      leaveLesson();
       state.view = 'progress';
       return null;
     case 'resume': {
+      // The current lesson or level this session, else the saved place.
       const s = state.saved;
-      if (s && s.lessonId && lessonRun && lessonRun.lesson.id === s.lessonId) { state.level = levelContaining(s.lessonId); state.view = 'lesson'; }
+      if (lessonRun) { state.level = levelContaining(lessonRun.lesson.id); state.view = 'lesson'; }
+      else if (state.level && LEVEL_BY_ID[state.level]) state.view = 'level';
       else if (s && s.level && LEVEL_BY_ID[s.level]) { state.level = s.level; state.view = 'level'; }
       else state.view = 'home';
       return null;
@@ -490,7 +522,7 @@ function reduce(action) {
         resetTransport();
         stopMeasure();
       }
-      if (r.event === 'blocked') state.lesson.feedback = { ok: false, message: 'Finish this step first: complete the practice or answer the question.' };
+      if (r.event === 'blocked') state.lesson.feedback = { ok: false, message: LINES.blocked() };
       return r.event;
     }
     case 'step-back':
@@ -510,6 +542,9 @@ function reduce(action) {
     }
     case 'demo-start':
       runDemo();
+      return null;
+    case 'beat-try':
+      if (lessonRun && !state.lesson.demo.running) state.lesson.beat = 'try';
       return null;
     case 'lesson-reset': {
       if (!lessonRun) return null;
@@ -760,6 +795,20 @@ function reduce(action) {
     case 'retry-save':
       saveNow();
       return null;
+
+    // Rosie's welcome
+    case 'welcome-open':
+      state.guide.open = true;
+      state.guide.step = 0;
+      return null;
+    case 'welcome-next':
+      if (state.guide.step + 1 >= WELCOME.length) return reduce({ type: 'welcome-done' });
+      state.guide.step += 1;
+      return null;
+    case 'welcome-done':
+      state.guide.open = false;
+      state.guide.welcomed = true;
+      return null;
     default:
       return null;
   }
@@ -774,6 +823,8 @@ async function restart() {
   state.persistence.path = keepPath;
   state.persistence.loaded = true;
   lessonRun = null;
+  // A deliberate fresh start begins with the welcome again.
+  state.guide.open = true;
   await api.progress.reset();
   render();
   await saveNow();
@@ -783,7 +834,7 @@ const PERSIST = new Set([
   'go-home', 'choose-level', 'open-level', 'start-lesson', 'begin-here', 'explore', 'go-progress', 'resume',
   'step-next', 'step-back', 'step-check', 'step-answer', 'lesson-reset', 'dismiss-migration',
   'select-channel', 'select-name', 'select-axis', 'set-digital', 'draw-digital-done', 'set-analog-value', 'set-command',
-  'select-laptop-ip', 'term-key', 'stop', 'play',
+  'select-laptop-ip', 'term-key', 'stop', 'play', 'welcome-done',
 ]);
 
 export function dispatch(action) {
@@ -853,8 +904,7 @@ function renderExplorePanel() {
   replace(dom.panel,
     el('div', { class: 'back-row' }, el('button', { type: 'button', class: 'btn btn-small', 'data-fid': 'back', text: state.level ? 'Lessons' : 'Home', onclick: () => dispatch({ type: state.level ? 'open-level' : 'go-home' }) })),
     el('h2', { text: 'All the windows' }),
-    el('p', { class: 'explore-note', text: 'The recreated PC•MACs windows, the Terminal, and the simulated float, with no lesson running. Hover or Tab to any control for a short note, press F1 or use Help ? then click a control for the full help, or open the Handbook.' }),
-    el('p', { class: 'muted', text: 'Nothing here connects to a controller or sends a command.' }));
+    el('div', { id: 'guide-dock', class: 'guide-dock', 'aria-hidden': 'true' }));
 }
 
 function revealedParts() {
@@ -895,6 +945,8 @@ function render() {
   ui.dialogs.update(state);
   renderNotice();
   renderHighlight();
+  // Rosie goes last, once the screen she is anchored to is in place.
+  ui.guide.update(guidePlan({ state, run: lessonRun }));
 }
 
 // ---------- boot ----------
@@ -923,6 +975,7 @@ async function boot() {
   ui.lesson = mountLesson(dom.panel, { dispatch });
   ui.handbook = mountHandbook(dom.handbook, { dispatch });
   ui.dialogs = mountDialogs({ dispatch });
+  ui.guide = mountGuideLayer({ dispatch, findControl, THREE });
 
   dom.navHome.addEventListener('click', () => dispatch({ type: 'go-home' }));
   dom.navProgress.addEventListener('click', () => dispatch({ type: 'go-progress' }));
@@ -942,6 +995,8 @@ async function boot() {
   } catch (error) {
     state.persistence.error = String(error && error.message ? error.message : error);
   }
+  // A learner the progress file does not know is welcomed before anything else.
+  state.guide.open = !state.guide.welcomed;
   state.persistence.loaded = true;
   render();
   ready = true;
@@ -955,13 +1010,16 @@ if (SMOKE) {
     stepInfo: () => {
       if (!lessonRun) return null;
       const c = lessonRun.current();
-      return { lessonId: lessonRun.lesson.id, index: c.index, total: c.total, id: c.step.id, kind: c.step.kind, target: c.step.target, done: c.done, canAdvance: c.canAdvance, isLast: c.isLast, revealed: lessonRun.revealed() };
+      return { lessonId: lessonRun.lesson.id, index: c.index, total: c.total, id: c.step.id, kind: c.step.kind, target: c.step.target, done: c.done, canAdvance: c.canAdvance, isLast: c.isLast, revealed: lessonRun.revealed(), beat: state.lesson.beat, demoFinished: state.lesson.demo.finished };
     },
     runDemo: () => runDemo(),
     openHelp: (id) => ui.help.open(id),
     closeHelp: () => ui.help.close(),
     setSearch: (q) => { if (!state.handbook.open) dispatch({ type: 'handbook-toggle' }); dispatch({ type: 'search', query: q }); },
     flushSave: () => saveNow(),
+    guide: () => ui.guide.debug(),
+    guideVisible: (on) => ui.guide.setVisible(on),
+    guideReduced: (force) => ui.guide.setReduced(force),
   };
 }
 

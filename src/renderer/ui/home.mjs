@@ -1,38 +1,39 @@
-// Home: the three learning levels, a Continue card when saved progress exists,
-// and a plain note when progress from the earlier version was found.
+// Home: one primary action in a plain card (Start with Basic for a first-time
+// learner; Continue, with Start over, for anyone with a place to go back to),
+// the three levels as rows, a quiet note when an older progress file was
+// carried over, and a way to meet Rosie again. Rosie herself floats beside
+// the primary action and does the talking from the guide layer.
 import { el, replace } from './dom.mjs';
-import { LEVELS, LESSONS_BY_ID, lessonsForLevel } from '../content/levels.mjs';
+import { LEVELS, lessonsForLevel } from '../content/levels.mjs';
+import { homeWhere } from '../logic/guide-plan.mjs';
 
 export function mountHome(container, { dispatch }) {
-  function levelCard(level, state) {
+  function levelRow(level, state) {
     const lessons = lessonsForLevel(level.id);
     const done = lessons.filter((l) => state.learning.completedLessons.includes(l.id)).length;
-    const started = state.level === level.id;
     return el('button', {
-      type: 'button', class: 'level-card', 'data-control': 'level-choice', 'data-fid': `level-${level.id}`, 'data-level': level.id,
+      type: 'button', class: 'level-row', 'data-control': 'level-choice', 'data-fid': `level-${level.id}`, 'data-level': level.id,
       onclick: () => dispatch({ type: 'choose-level', level: level.id }),
     },
       el('h2', { text: level.name }),
       el('p', { class: 'tagline', text: level.tagline }),
-      el('p', { class: 'covers', text: `Covers ${level.groups.map((g) => g.title.toLowerCase()).join(', ')}.` }),
-      el('p', { class: 'count', text: done ? `${done} of ${lessons.length} lessons finished` : `${lessons.length} lessons` }),
-      el('span', { class: 'cta', text: started || done ? `Continue ${level.name}` : `Start ${level.name}` }));
+      el('span', { class: 'count', text: done ? `${done} of ${lessons.length} lessons finished` : `${lessons.length} lessons` }));
   }
 
-  function continueCard(state) {
-    const s = state.saved;
-    if (!s || (!s.level && !s.lessonId)) return null;
-    const level = LEVELS.find((l) => l.id === s.level);
-    const lesson = s.lessonId ? LESSONS_BY_ID[s.lessonId] : null;
-    const where = lesson
-      ? `${lesson.title}, step ${Math.min(s.stepIndex, lesson.steps.length - 1) + 1} of ${lesson.steps.length}`
-      : 'the lesson list';
-    return el('div', { class: 'continue-card' },
-      el('div', { class: 'where' },
-        el('strong', { text: `Continue where you left off` }),
-        el('span', { text: `${level ? level.name : 'Your level'}: ${where}. The show starts stopped.` })),
-      el('button', { type: 'button', class: 'btn btn-primary', 'data-control': 'resume', 'data-fid': 'resume', text: 'Continue', onclick: () => dispatch({ type: 'resume' }) }),
-      el('button', { type: 'button', class: 'btn', 'data-control': 'restart', 'data-fid': 'restart', text: 'Start over', onclick: () => dispatch({ type: 'restart-request' }) }));
+  function action(state) {
+    const w = homeWhere(state);
+    if (!w) {
+      // Rosie stands beside this card (its data-target) and does the talking.
+      return el('div', { class: 'home-action', 'data-target': 'start-learning' },
+        el('p', { class: 'lead', text: 'New here? Basic covers enough to get by.' }),
+        el('div', { class: 'btn-row' },
+          el('button', { type: 'button', class: 'btn btn-primary btn-big', 'data-control': 'start-learning', 'data-fid': 'start-basic', text: 'Start with Basic', onclick: () => dispatch({ type: 'choose-level', level: 'basic' }) })));
+    }
+    return el('div', { class: 'home-action continue-card', 'data-target': 'resume' },
+      el('p', { class: 'lead', text: 'Pick up where you were, or start again from nothing.' }),
+      el('div', { class: 'btn-row' },
+        el('button', { type: 'button', class: 'btn btn-primary btn-big', 'data-control': 'resume', 'data-fid': 'resume', text: 'Continue', onclick: () => dispatch({ type: 'resume' }) }),
+        el('button', { type: 'button', class: 'btn', 'data-control': 'restart', 'data-fid': 'restart', text: 'Start over', onclick: () => dispatch({ type: 'restart-request' }) })));
   }
 
   function foundCard(state) {
@@ -58,12 +59,14 @@ export function mountHome(container, { dispatch }) {
     const activeEl = document.activeElement;
     const fid = activeEl && container.contains(activeEl) ? activeEl.dataset.fid : null;
     replace(container, el('div', { class: 'home' },
-      el('h1', { text: 'Choose how deep to go.' }),
-      el('p', { class: 'lede', text: 'Three ways through the same recreated PC•MACs windows, one step at a time. Lessons shared between levels keep their progress, so you can switch whenever you like.' }),
-      continueCard(state),
+      el('h1', { class: 'sr-only', text: 'Home' }),
+      action(state),
+      el('h2', { class: 'home-or', text: homeWhere(state) ? 'Or choose a level' : 'Or choose how deep to go' }),
+      el('div', { class: 'level-rows' }, ...LEVELS.map((level) => levelRow(level, state))),
       foundCard(state),
-      el('div', { class: 'levels' }, ...LEVELS.map((level) => levelCard(level, state))),
-      el('p', { class: 'muted', text: 'Progress is saved in this app’s own folder on this computer and never sent anywhere. The handbook is one click away at any time.' })));
+      el('p', { class: 'home-foot muted' },
+        'Progress is saved in this app’s own folder on this computer and never sent anywhere. ',
+        el('button', { type: 'button', class: 'link-btn', 'data-control': 'welcome-guide', 'data-fid': 'welcome-replay', text: 'Meet Rosie again', onclick: () => dispatch({ type: 'welcome-open' }) }))));
     if (fid) container.querySelector(`[data-fid="${fid}"]`)?.focus();
   }
 

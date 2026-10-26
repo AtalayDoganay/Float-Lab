@@ -21,6 +21,11 @@
 //      slider values. A version-2 document keeps its location and every
 //      learning record; each ON block becomes 30 ON frames of Light 1, and the
 //      saved command becomes the Soft Console value of the saved axis.
+//   3  (October 23, 2026, same version) optional `guide.welcomed`: whether the
+//      learner has seen the mascot's welcome. Absent means true, because a file
+//      written before the welcome existed belongs to someone who has already
+//      used the trainer; a fresh document starts at false. No backup or
+//      migration note is needed for this addition.
 
 export const SCHEMA_VERSION = 3;
 export const FPS = 30;
@@ -68,6 +73,7 @@ export function createEmptyProgress() {
     guided: { completedSteps: [], completedExercises: [] },
     settings: cloneSettings(DEFAULT_SETTINGS),
     migrated: null,
+    guide: { welcomed: false },
   };
 }
 
@@ -218,6 +224,13 @@ function readMigrated(input) {
   };
 }
 
+// Absent means welcomed (an older file); present must carry a boolean.
+function readGuide(input) {
+  if (input === undefined) return { welcomed: true };
+  if (!isPlainObject(input) || typeof input.welcomed !== 'boolean') return null;
+  return { welcomed: input.welcomed };
+}
+
 /**
  * Validate and normalize a current-schema progress document.
  * @returns {{ok: true, value: object} | {ok: false, error: string}}
@@ -232,6 +245,9 @@ export function validateProgress(input) {
 
   const settings = readSettings(input.settings);
   if (!settings) return { ok: false, error: 'invalid-settings' };
+
+  const guide = readGuide(input.guide);
+  if (!guide) return { ok: false, error: 'invalid-guide' };
 
   const learning = isPlainObject(input.learning) ? input.learning : {};
 
@@ -250,6 +266,7 @@ export function validateProgress(input) {
       ...readLegacyRecords(input),
       settings,
       migrated: readMigrated(input.migrated),
+      guide,
     },
   };
 }
@@ -293,6 +310,7 @@ export function migrateProgress(input) {
         // This migration is the one the learner needs explained (location kept,
         // blocks converted), so it replaces any note left by a v1 -> v2 migration.
         migrated: { fromSchemaVersion: 2, originalSavedAt: savedAt, originalView: location.view },
+        guide: { welcomed: true },
       },
     };
   }
@@ -314,6 +332,7 @@ export function migrateProgress(input) {
         originalSavedAt: savedAt,
         originalView: typeof oldLocation.view === 'string' ? oldLocation.view : null,
       },
+      guide: { welcomed: true },
     },
   };
 }

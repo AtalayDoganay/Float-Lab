@@ -142,6 +142,7 @@ low-resolution preview frames and the Gilderfluke videos have no captions.
 | Hypothetical laptop address and example travel range | adapted |
 | Trainer note strip under the windows | adapted |
 | Lesson panel, handbook, hover/focus tooltips, F1 help, Help ? “What's this?” mode | adapted |
+| Rosie (the guide), her welcome dialog, and the speech-bubble lesson panel with its look / watch / try beats | adapted; Rosie is an original drawing after the Cal Poly Rose Float logo, never shown inside the recreated windows (see `docs/GUIDE_DESIGN.md`) |
 
 ## Photographed values quoted in lessons
 

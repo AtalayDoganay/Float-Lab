@@ -36,9 +36,23 @@ security model, and what has and has not been verified on Windows.
 
 ## What you will see
 
-- **Home**: three learning levels, named Basic, intermediate, and I hate my
-  life. When saved progress exists, a Continue card names the level, lesson,
-  and step you were on, next to Start over.
+- **Rosie's welcome** (first launch only): Rosie, the trainer's guide, a small
+  plush rose in 3D adapted from the Cal Poly Rose Float logo (see
+  `docs/GUIDE_DESIGN.md`), appears over a dimmed Home and talks through three
+  short beats in her speech bubble; on the last one she flies to the Start
+  button and points at it. Skip or Esc closes it; "Meet Rosie again" on Home
+  replays it.
+- **Home**: one action card (first time: Start with Basic; returning: Continue,
+  beside Start over) with Rosie floating beside it, saying where you were.
+  Under it, the three learning levels, named Basic, intermediate, and I hate
+  my life, as three rows.
+- **Rosie, everywhere**: she floats over the whole window, flies to the control
+  each step is about, points at it, and talks beside it; she bobs, blinks,
+  follows the pointer with her eyes, cheers a pass with a hop and sparkles,
+  and winces at a miss. She keeps off the control you need and off the open
+  menus, and never blocks a click; in a crowded or very small window she may
+  stand over other parts of the screen. Without WebGL she falls back to flat
+  sprites.
 - **A level's lesson map**: lessons grouped by what they teach (the interface,
   graphs, terminology, functions, hydraulics, diagnosis, assignments), with a
   Begin here card pointing at the first unfinished lesson. Finished lessons show
@@ -53,15 +67,22 @@ security model, and what has and has not been verified on Windows.
   - I hate my life (27 lessons) includes every Basic and intermediate lesson plus
     every menu line of the photographed configuration menus, the gaps the
     references leave open, a diagnosis lesson, and a round-trip assignment.
-- **A lesson**: a compact panel on the left with the step count, Back, Next, the
-  explanation and a plain-language example, Show me (a demonstration run in the
-  recreated windows), and Now you try with a Check button. On the right, the
-  PC•MACs menu bar and only the windows and panes the lesson has introduced so
-  far, with the current control highlighted. A practice step checks itself when
-  you act (drag along a channel, choose Edit ▸ Set Digitals On, move a Soft
-  Console slider, press Play, type a terminal key), explains what to fix, and
-  unlocks Next only when it passes. Questions explain the misconception behind a
-  wrong choice and let you retry.
+- **A lesson**: a compact panel on the left with the step count, one action,
+  and Back / Next, while Rosie stands beside the control the step is about
+  (or in the panel when there is nothing to point at) and says the step's
+  words in her bubble. Each step is shown one beat at a time:
+  look (the explanation, with the control highlighted on the right), watch
+  (Show me runs the demonstration in the recreated windows while Rosie narrates
+  it), try (Your turn shows the instruction and what a right result looks like,
+  with a Check button), and the result (Rosie cheers a pass and, after a miss,
+  the message names what to fix). The example, the mechanism note, the
+  control's full help, the handbook link, the reference photo, and Restart this
+  lesson sit under "More about this step". On the right, the PC•MACs menu bar
+  and only the windows and panes the lesson has introduced so far. A practice
+  step checks itself when you act (drag along a channel, choose Edit ▸ Set
+  Digitals On, move a Soft Console slider, press Play, type a terminal key) and
+  unlocks Next only when it passes. Questions explain the misconception behind
+  a wrong choice and let you retry.
 - **Handbook** (top right): a searchable drawer that opens beside the lesson
   and closes without losing your place. Entries for every control, the core
   concepts, Rose Float examples (electronics, sensors, hydraulics, motion,
@@ -128,7 +149,8 @@ evidence label. (F1 is Play in PC•MACs; here it stays the help key.)
 A small JSON file in the app's own user-data folder (the Progress view shows the
 path, typically `%APPDATA%\Roseflow PC Mac Training\progress.json`). It is
 independent of One File and is never sent anywhere. The file is schema version
-3. A file written by an earlier build is read, backed up beside itself
+3; since October 23, 2026 it also remembers whether Rosie's welcome has been
+seen. A file written by an earlier build is read, backed up beside itself
 (`progress.v1-backup.json` or `progress.v2-backup.json`), and carried forward:
 finished lessons and steps stay finished, answered questions and finished
 exercise steps pre-mark the guided steps that reuse them, and a saved light
@@ -151,14 +173,21 @@ manufacturer documentation; manuals are linked, not bundled.
 - `src/renderer/` the app: `content/` (levels and guided lessons under
   `lessons/`, control help, the PC•MACs menus, the classic curriculum and
   exercises the lessons reuse, handbook, references), `logic/` (pure show data
-  and simulation, outputs, lesson flow, search, terminal), `ui/` (DOM modules:
-  `pcmacs.mjs` frame and menus, `edit-view.mjs`, `control-window.mjs`,
-  `soft-console.mjs`, `terminal.mjs`, `float-panel.mjs`, lesson panel,
-  handbook, help), `assets/reference-photos/`.
+  and simulation, outputs, lesson flow, step beats, search, terminal), `ui/`
+  (DOM modules: `pcmacs.mjs` frame and menus, `edit-view.mjs`,
+  `control-window.mjs`, `soft-console.mjs`, `terminal.mjs`, `float-panel.mjs`,
+  lesson panel, handbook, help, `guide-layer.mjs` for Rosie's floating layer
+  and her welcome), `guide/` (her 3D model, face, effects, and stage),
+  `vendor/three/` (Three.js, vendored), `content/mascot.mjs` (her name and
+  lines), `assets/reference-photos/`, `assets/mascot/` (her five sprite
+  expressions, the fallback without WebGL, generated by
+  `scripts/build-mascot.mjs`).
 - `src/shared/progress-schema.mjs` the versioned progress document and its
   migration.
 - `tests/` unit and behavioral tests (`npm test`).
-- `scripts/smoke.mjs` hidden-window smoke harness (`npm run smoke`).
-- `docs/` setup, reference fidelity, verification record, implementation plan.
+- `scripts/smoke.mjs` hidden-window smoke harness (`npm run smoke`);
+  `scripts/build-mascot.mjs` regenerates Rosie's SVG files.
+- `docs/` setup, reference fidelity, the guide's design and sources
+  (`GUIDE_DESIGN.md`), verification records, specs and implementation plans.
 - `one-file-promot-float-lab/` the One File task and the staged, hash-verified
   originals in `sources/`. Not packaged into the app.

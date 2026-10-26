@@ -14,7 +14,7 @@
 | `npm ci` | Installs the pinned dependencies from `package-lock.json`. |
 | `npm start` | Runs the app in development (Electron Forge `start`). |
 | `npm test` | Runs the unit and behavioral tests with `node --test`. |
-| `npm run smoke` | Runs the hidden-window smoke harness against the development app: fresh run through the home screen, a level map, two lessons driven through the recreated Edit View and Edit menu, the handbook, and help; resume after a real relaunch; malformed progress file; simulated save failure; migration of a version-1 and of a version-2 progress file; the practice steps that use the recreated windows. Never shows a window or takes focus; pointer events are synthetic and go only to the hidden page. |
+| `npm run smoke` | Runs the hidden-window smoke harness against the development app: fresh run through Rosie's welcome, the home screen, a level map, two lessons driven through the recreated Edit View and Edit menu (including the look / watch / try beats and Back during a demonstration), the handbook, and help; resume after a real relaunch; malformed progress file; simulated save failure; migration of a version-1 and of a version-2 progress file; the practice steps that use the recreated windows. Never shows a window or takes focus; pointer events are synthetic and go only to the hidden page. |
 | `node scripts/smoke.mjs --exe "<path to RoseflowPCMacTraining.exe>"` | Runs the same scenarios against a packaged build. |
 | `node scripts/smoke.mjs --shots <dir>` | Captures review screenshots of the hidden window into `<dir>`. |
 | `npm run package` | Packages the app into `out/Roseflow PC Mac Training-win32-x64/`. |
@@ -44,6 +44,14 @@ with Windows' built-in "Send to > Compressed (zipped) folder" or
 exact path. The file is a versioned JSON document (`schemaVersion: 3`) written
 atomically (temp file + rename). Unreadable or incompatible files are renamed to
 `progress.invalid-<timestamp>.json` beside it, never deleted.
+
+Since October 23, 2026 the document also carries `guide: { welcomed: boolean }`,
+whether Rosie's welcome has been seen. The version stays 3 because nothing else
+changed: a file without the field is read as `welcomed: true` (its owner has
+already used the trainer, so no welcome), a fresh document starts at `false`,
+and migrated version-1 and version-2 files are marked `true`. Start over writes
+a fresh document, so the welcome shows again after a confirmed restart. No
+backup or migration note is involved.
 
 To test with a throwaway profile, set `ROSEFLOW_USERDATA=<folder>` before launching.
 
@@ -138,6 +146,12 @@ for a version-2 file.
   only-load-from-ASAR on.
 - No serial, USB, DMX, or network libraries are present. The smoke harness
   records every non-`file:` request made by the renderer and asserts there are none.
+- The one third-party library in the renderer is Three.js (`three@0.186.1`, MIT),
+  vendored byte for byte under `src/renderer/vendor/three/` and loaded from the
+  app's own files under the same CSP. It draws Rosie, the guide, on a small WebGL
+  canvas; no loader, worker, or network code path of it is used, and
+  `tests/vendor-three.test.mjs` checks the files' hashes and that they contain no
+  `eval`. Without WebGL the guide falls back to bundled SVG sprites.
 
 ## Continuous integration
 

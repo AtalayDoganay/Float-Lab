@@ -220,3 +220,15 @@ test('migration refuses what it cannot understand instead of guessing', () => {
   assert.equal(migrateProgress(v2Doc({ settings: { blocks: [true] } })).ok, false, 'nor is a version-2 file');
   assert.equal(migrateProgress(v2Doc({ location: { view: 'nowhere' } })).ok, false);
 });
+
+test('guide.welcomed: fresh documents start unwelcomed, older files count as welcomed', () => {
+  assert.deepEqual(createEmptyProgress().guide, { welcomed: false });
+  const noGuide = validateProgress({ ...createEmptyProgress(), guide: undefined });
+  assert.equal(noGuide.ok, true);
+  assert.deepEqual(noGuide.value.guide, { welcomed: true });
+  const kept = validateProgress({ ...createEmptyProgress(), guide: { welcomed: false } });
+  assert.deepEqual(kept.value.guide, { welcomed: false });
+  assert.equal(validateProgress({ ...createEmptyProgress(), guide: { welcomed: 'yes' } }).error, 'invalid-guide');
+  assert.deepEqual(migrateProgress(v1Doc()).value.guide, { welcomed: true });
+  assert.deepEqual(migrateProgress(v2Doc()).value.guide, { welcomed: true });
+});

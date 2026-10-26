@@ -1,0 +1,200 @@
+# Rosie, the Rose Float guide, and the simplified trainer — design
+
+Date: October 23, 2026. Implements One File task revision 1, “Simplify the
+trainer and add a Rose Float mascot guide” (prepared October 23, 2026 at
+1:55 PM UTC-07:00, `one-file-promot-float-lab/ONE_FILE_TASK.md`). The owner
+asked for the task to be implemented as written, so the decisions below were
+made by the implementer and are recorded here rather than agreed in
+conversation. Each is reversible in one place.
+
+## Intent
+
+A new team member should open Roseflow PC Mac Training and know, without
+reading a page of text, where to start and what to do next. A small, cute
+anime-style character adapted from the Cal Poly Rose Float logo welcomes
+them, then stays beside the lesson and guides each step: look at one thing,
+watch it done, do it yourself, hear whether it worked. The recreated PC•MACs
+windows stay the place where practice happens.
+
+## What the research says (sources used)
+
+- **Progressive disclosure** (Nielsen Norman Group, “Progressive Disclosure”):
+  show the few options most people need first; put the rest one click away
+  behind a clearly labelled control; two levels at most. Novices make fewer
+  mistakes and spend less time on features they do not need.
+- **Onboarding tutorials** (Nielsen Norman Group, “Onboarding Tutorials vs.
+  Contextual Help”): walkthroughs shown before they are needed are “pushy,
+  devoid of context, and intrusive”; help works when it is pulled by what the
+  learner is doing, sits beside each step, is easy to dismiss and easy to
+  recall, and makes the learner practise.
+- **Bite-sized lessons with immediate feedback and a mascot** (secondary
+  analyses of Duolingo: Appcues “Duolingo’s delightful user onboarding”, UX
+  Planet, a NextLeap product teardown, and Duolingo’s own 2021 home page):
+  short lessons, instant right/wrong with a one-line explanation after a
+  mistake, the learner picks their experience level up front, and the
+  mascot adds warmth at the welcome and at feedback moments rather than
+  teaching content.
+- **Guided tours** (Pendo “What is progressive disclosure?”, Rapidnative
+  onboarding guide, Height example): reveal a handful of things first, keep
+  any tour under a few minutes, never block the underlying screen for long,
+  advance on what the user does rather than on a timer, and let people replay
+  the tour from a Help entry.
+- The owner’s own reference, Freddy in *Five Nights at Freddy’s: Security
+  Breach*: a companion character who talks the player through each place,
+  points at the next thing, and reacts to what happens. Used for the role of
+  the guide, not for its look.
+
+What that means for this trainer:
+
+1. One short welcome from the mascot, three beats, skippable, shown once.
+2. One obvious primary action on every screen; everything else is quieter or
+   behind a labelled “More”.
+3. Inside a step, one focus at a time: look, watch, try, result. The step
+   count and Back / Next are always visible.
+4. Feedback comes from the mascot immediately, in words that say what to fix.
+5. Help stays contextual (hover, F1, Help ? then click, Handbook) and the
+   welcome can be replayed from Home.
+
+## The mascot: Rosie
+
+**Source logo, verified.** The Cal Poly Rose Float logo is a red rose with
+green serrated leaves and a thorned stem inside a rounded-square green badge
+that reads “CAL POLY” above and “ROSE FLOAT” below, with “SINCE 1949” beside
+the stem. Two independent copies agree:
+
+- the program’s own site header, `rosefloat.org` (“RoseFloat Logo 2026 fully
+  transparent.png”, 1500 × 1500, fetched October 23, 2026);
+- the English Wikipedia file `Cal_Poly_Pomona_Rose_Float_logo.svg`, whose file
+  page names the owner as CPP Rose Float and the source as cpprosefloat.org
+  (uploaded January 9, 2011).
+
+The logo is the program’s trademark (the 2026 version carries ®). Rosie is an
+original drawing made for the team’s own trainer and is not the logo; the
+app says so where she is introduced in the docs. The downloaded logo files
+stay outside the repository.
+
+**Character.** Rosie is a chibi rose sprite: the bloom is her head (dark red
+outer petals, brighter inner petals, a small spiral bud at the crown), large
+anime eyes with two highlights, blush marks, a small smile; serrated green
+leaves are her arms; a short thorned stem and a leaf skirt are her body; she
+stands in front of the rounded-square green badge outline from the logo. Her
+palette is the logo’s: rose red `#c8102e` / `#a50f24` / highlight `#ef5a6e`,
+leaf green `#1f6f3f` / `#2e8b57`, with the trainer’s rose-pink `#e0728a`
+only for UI chrome around her.
+
+**Expressions** (five SVG files, one per expression, bundled in
+`src/renderer/assets/mascot/`): `wave` (welcome and Home), `point` (look at
+this control, your turn), `happy` (watching a demonstration, neutral),
+`cheer` (a passed check or correct answer), `oops` (a wrong action or
+answer, with a sweat drop). The files are generated by
+`scripts/build-mascot.mjs` so the shapes stay consistent; the generated SVGs
+are the shipped assets. They use presentation attributes only (the CSP
+forbids inline styles) and load through `<img>` from the app’s own files, so
+they work offline and in the packaged build.
+
+**Voice.** Short sentences, plain words, never covers the controls being
+taught. The teaching text itself (explanations, instructions, questions,
+feedback messages) is unchanged; Rosie frames it, she does not replace it.
+Her name is a working name set in one place (`content/mascot.mjs`).
+
+## Screens
+
+### Welcome (first launch only)
+
+A modal dialog over Home, before any lesson, with Rosie large and a speech
+bubble. Three beats, each one or two sentences, Next between them, Skip
+always visible, Esc closes:
+
+1. who she is and what the trainer is (an independent, simulation-only copy
+   of the PC•MACs windows);
+2. how a step works: she points at one thing, shows it, then you try it, and
+   she tells you whether it worked;
+3. where help is (hover, Help ? then click, F1, Handbook), then “Let’s go”.
+
+Shown when the saved progress file does not say the learner has been
+welcomed. Returning learners (a saved file from before this build, or any
+saved progress) never see it; Rosie greets them on Home instead. “Meet Rosie
+again” on Home replays it. Start over (confirmed) resets the flag, so a
+deliberate fresh start begins with the welcome.
+
+### Home
+
+Rosie beside one speech bubble and one primary button.
+
+- First time: “Hi, I’m Rosie… Let’s start with Basic, it covers enough to
+  get by.” Button: **Start with Basic**.
+- Returning: “Welcome back. You were on *lesson*, step *n* of *m*.” Button:
+  **Continue**, with **Start over** beside it (confirmation unchanged).
+
+Under that, “Or choose how deep to go”: the three levels as three rows, named
+exactly **Basic**, **intermediate**, **I hate my life**, each with its one-line
+tagline and lesson count (or finished count). The migration note for an
+older progress file stays, as a quiet block under the rows. The long lede and
+the “Covers …” lines are gone; the level map shows the groups.
+
+### Level map
+
+Unchanged structure (grouped by function, Begin here card, finished check
+marks, explore link). The Begin here card gets a small Rosie and her line
+(“Begin here”, “Pick up where you stopped”, “Lesson finished: … Next up: …”,
+or “You finished every lesson in this level”).
+
+### Lesson panel (the main change)
+
+Top to bottom, always: Lessons (back), kicker (level, group), lesson title,
+**Step n of m** with dots. Then one guide card: Rosie (72 px) beside a speech
+bubble that holds the step title and the text for the current *beat*. Then
+the beat’s one primary action. Then **Back** and **Next**. Then a `More`
+disclosure (closed by default) holding the example, the mechanism note with
+its evidence chip, the control’s ? help, the handbook link, the reference
+photo, and Restart this lesson.
+
+Beats, kept in renderer state (`state.lesson.beat`), never saved:
+
+| Step kind | look | watch (only if the step has a demo) | try | result |
+| --- | --- | --- | --- | --- |
+| explain | explanation; primary **Show me** if a demo exists, else **Next** | Rosie narrates `demo.intro`; buttons wait; then `demo.outro`, primary **Next**, link “Watch again” | — | — |
+| practice | explanation; primary **Show me** if a demo exists, else **Your turn**; link “Skip to trying” when a demo exists | as above, then primary **Your turn** | instruction, “When it’s right: *success*”, button **Check**, link “Show me again” if a demo exists | Rosie `cheer` + the pass message, **Next** becomes primary; or Rosie `oops` + the correction message, stay in try |
+| question | explanation and the prompt, the options | — | — | right: `cheer`, Next primary; wrong: `oops` with the hint, options stay |
+
+A learner who acts in the windows before pressing Your turn still gets
+checked (the triggers are unchanged); the panel jumps to the try beat so the
+feedback has its place. A step that is already done opens in its result
+beat with Next enabled. Resume opens the saved step at its first beat, which
+repeats no completed instruction because completed steps are marked done.
+
+The workspace highlight of the step’s target control is unchanged; Rosie’s
+`point` expression faces it.
+
+### Explore, Progress, Handbook, Help
+
+Unchanged, except Rosie’s one-line greeting at the top of the Explore panel
+and a “Meet Rosie again” entry on Home.
+
+## Progress file
+
+Schema version stays 3. `guide: { welcomed: boolean }` is added as an
+optional field: absent means `true` (a file written before this build
+belongs to someone who has already used the trainer), a fresh document
+starts at `false`, version-1 and version-2 migrations set `true`. Nothing
+else changes, so no backup or migration note is needed. Start over writes a
+fresh document, so `welcomed` is `false` again.
+
+## Non-goals
+
+- No new playback subsystem; the existing Show me demonstrations are reused.
+  The 2026-10-11 looping-demo document stays historical.
+- No change to lesson ids, step ids, teaching text, questions, answers,
+  validators, the recreated windows, the handbook, or control help.
+- No remote service, font, or image. No network access.
+- No animation beyond a small wave on the welcome and the existing target
+  pulse, both off under `prefers-reduced-motion`.
+
+## Verification
+
+`npm test` with new tests for the beat logic, the mascot content, and the
+schema field; `npm run smoke` with the first scenario extended (welcome
+before any lesson, dismiss, Rosie on Home, beats through a practice step,
+mascot image loaded), the resume scenario asserting no welcome, and the
+screenshot scenario capturing the welcome, Home, and the lesson beats. A
+packaged build is smoke-tested if `npm run make` succeeds on this machine.
