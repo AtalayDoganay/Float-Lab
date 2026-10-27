@@ -28,25 +28,43 @@ function stubCtx() {
 }
 
 const count = (calls, ...names) => calls.filter((c) => names.includes(c.name)).length;
+const EXPRESSIONS = ['wave', 'point', 'happy', 'cheer', 'oops', 'idle'];
+const MOODS = ['none', 'notice', 'hover', 'boop', 'giggle', 'dizzy', 'pet', 'sleep', 'startle'];
 
 test('each expression maps to one face', () => {
   assert.equal(FACE_SIZE, 512);
-  assert.deepEqual(faceParams('wave'), { eye: 'open', brow: 'up', mouth: 'grin', blush: 0.5 });
-  assert.deepEqual(faceParams('point'), { eye: 'open', brow: 'determined', mouth: 'smile', blush: 0.35 });
-  assert.deepEqual(faceParams('happy'), { eye: 'happy', brow: 'none', mouth: 'smile', blush: 0.5 });
+  assert.deepEqual(faceParams('wave'), { eye: 'open', brow: 'up', mouth: 'grin', blush: 0.6 });
+  assert.deepEqual(faceParams('point'), { eye: 'open', brow: 'determined', mouth: 'smile', blush: 0.4 });
+  assert.deepEqual(faceParams('happy'), { eye: 'happy', brow: 'none', mouth: 'cat', blush: 0.6 });
   assert.deepEqual(faceParams('cheer'), { eye: 'closed', brow: 'up', mouth: 'open', blush: 1 });
-  assert.deepEqual(faceParams('oops'), { eye: 'wide', brow: 'worried', mouth: 'wobble', blush: 0.2 });
-  assert.deepEqual(faceParams('idle'), { eye: 'open', brow: 'none', mouth: 'smile', blush: 0.35 });
+  assert.deepEqual(faceParams('oops'), { eye: 'wide', brow: 'worried', mouth: 'wobble', blush: 0.3 });
+  assert.deepEqual(faceParams('idle'), { eye: 'open', brow: 'none', mouth: 'smile', blush: 0.4 });
   assert.deepEqual(faceParams('whatever'), faceParams('idle'));
+});
+
+test('a mood lays its own eyes and mouth over the expression', () => {
+  assert.deepEqual(faceParams('point', 'none'), faceParams('point'));
+  assert.deepEqual(faceParams('point', 'hover'), { eye: 'sparkle', brow: 'up', mouth: 'grin', blush: 0.8 });
+  assert.equal(faceParams('point', 'boop').eye, 'squeeze');
+  assert.equal(faceParams('point', 'dizzy').eye, 'dizzy');
+  assert.equal(faceParams('point', 'pet').mouth, 'cat');
+  assert.equal(faceParams('point', 'sleep').eye, 'sleep');
+  assert.equal(faceParams('point', 'startle').eye, 'wide');
+  const notice = faceParams('point', 'notice');
+  assert.equal(notice.eye, 'open', 'noticing keeps the expression’s eyes');
+  assert.ok(notice.blush > faceParams('point').blush, 'with a touch more blush');
 });
 
 test('open eyes are drawn as ellipses with highlights, happy eyes as arcs', () => {
   const open = stubCtx();
   drawFace(open.ctx, faceParams('point'), { look: { x: 0, y: 0 }, blink: 0, mouthOpen: 0 });
-  assert.ok(count(open.calls, 'ellipse', 'arc') >= 4, `eyes and highlights: ${count(open.calls, 'ellipse', 'arc')}`);
+  assert.ok(count(open.calls, 'ellipse', 'arc') >= 8, `eyes, irises, pupils and highlights: ${count(open.calls, 'ellipse', 'arc')}`);
   const happy = stubCtx();
   drawFace(happy.ctx, faceParams('happy'), { look: { x: 0, y: 0 }, blink: 0, mouthOpen: 0 });
   assert.ok(count(happy.calls, 'arc', 'quadraticCurveTo', 'bezierCurveTo') >= 2, 'curved happy eyes');
+  const sparkle = stubCtx();
+  drawFace(sparkle.ctx, faceParams('point', 'hover'), { look: { x: 0, y: 0 }, blink: 0, mouthOpen: 0 });
+  assert.ok(count(sparkle.calls, 'lineTo') > count(open.calls, 'lineTo'), 'sparkling eyes add a star glint');
 });
 
 test('a blink closes the eyes', () => {
@@ -58,11 +76,13 @@ test('a blink closes the eyes', () => {
   assert.ok(count(shut.calls, 'quadraticCurveTo', 'arc', 'bezierCurveTo') >= 2, 'closed lids are drawn as curves');
 });
 
-test('every expression draws without touching anything a canvas lacks', () => {
-  for (const name of ['wave', 'point', 'happy', 'cheer', 'oops', 'idle']) {
-    const { ctx, calls } = stubCtx();
-    assert.doesNotThrow(() => drawFace(ctx, faceParams(name), { look: { x: 0.7, y: -0.4 }, blink: 0.3, mouthOpen: 0.8, t: 1.3 }), name);
-    assert.ok(count(calls, 'fill', 'stroke') >= 4, `${name}: paints something`);
+test('every expression and mood draws without touching anything a canvas lacks', () => {
+  for (const name of EXPRESSIONS) {
+    for (const mood of MOODS) {
+      const { ctx, calls } = stubCtx();
+      assert.doesNotThrow(() => drawFace(ctx, faceParams(name, mood), { look: { x: 0.7, y: -0.4 }, blink: 0.3, mouthOpen: 0.8, t: 1.3 }), `${name}/${mood}`);
+      assert.ok(count(calls, 'fill', 'stroke') >= 4, `${name}/${mood}: paints something`);
+    }
   }
   const { ctx } = stubCtx();
   assert.doesNotThrow(() => drawFace(ctx, faceParams('oops')));

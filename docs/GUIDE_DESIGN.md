@@ -196,3 +196,83 @@ path is used.
   tooltip guidance; read October 24, 2026): place the callout beside the
   target and never over it, flip when there is no room, keep one callout at
   a time.
+
+## Rosie as a chibi toon who reacts (October 26, 2026)
+
+The owner reviewed the October 24 build, found the 3D character ugly, and
+asked for her to look more anime chibi and cuter, like Duolingo's
+characters, and to be more interactive. The design is in
+`docs/superpowers/specs/2026-10-26-rosie-chibi-toon-design.md`; this
+section records what was built and where to change it. Where she goes, what
+she says, the bubble, the placement rules, the sprite fallback and the
+accessibility behaviour are unchanged from October 24.
+
+### The look
+
+Still built from rounded primitives in `src/renderer/guide/rosie-model.mjs`,
+now as an illustration rather than a plush:
+
+| Part | Built from | Colour |
+| --- | --- | --- |
+| Head (bloom) | a core sphere; a back ring of 8 chunky petals and a front ring of 8 fanned away from the face; a three-sphere curl at the crown | `#e8435f`, `#d11e42`, `#aa1333`; ink `#5a0c20` |
+| Face plate | a shallow unlit spherical cap carrying the whole drawing (disc, rim, eyes, mouth) | the drawing |
+| Face (`guide/face.mjs`) | a pale disc with an ink rim; eyes about a third of the face, each a white with a green iris, a dark pupil, a glassy crescent, two highlights, a heavy upper lid and a lash flick; brows; flat blush ovals; mouth styles smile, grin, cat (ω), open, o, wobble | skin `#ffe6eb`, iris `#1d6b3d` to `#62d394`, ink `#5a0c20`, blush `#ff9fb3` |
+| Body | a short capsule stem with two rounded thorn nubs | `#55c67f`, nubs `#2a8a4e` |
+| Leaf collar, arms, feet | six small leaves under the head; a flattened leaf and a round mitten tip per arm; two small feet | `#2fa35b`, `#44b86f`, `#2a8a4e`; ink `#15482b` |
+
+Proportions follow the chibi guides: the bloom is about three fifths of her
+height, there is no neck, the body is narrow with stubby limbs. Shading is
+`MeshToonMaterial` with a nearest-filtered three-band gradient map
+(`makeGradientMap`), lit by one warm key light and a soft hemisphere
+(`guide/stage.mjs`), with no tone mapping so the colours stay saturated.
+Every shaded piece carries an `ink` child: the same geometry drawn
+back-face only and pushed out along its view-space normal by `OUTLINE`
+(0.028 units, about 2.5 px), the inverted-hull outline. The face plate is
+unlit so the drawing stays flat and crisp. The badge tag, the seam ring,
+the velvet material and the environment map of October 24 are gone.
+
+### The reactions
+
+`src/renderer/logic/guide-interaction.mjs` is a pure state machine the layer
+feeds with pointer moves, presses and activity; `poseFor` and `faceParams`
+take its mood as an overlay on the expression.
+
+| Mood | Trigger | Face and body |
+| --- | --- | --- |
+| notice | the pointer within 340 px | a touch more blush; she turns toward it |
+| hover | the pointer resting on her | sparkle eyes, grin; a stretch, arms lifted |
+| boop, then giggle | a press on her that is not on a control | > < eyes and an o mouth with a squash; then happy eyes, hops and a roll wiggle; a puff of sparkles and petals |
+| dizzy | three boops within 1.6 s | spiral eyes, a wobble for 2.4 s |
+| pet | three direction changes across the top of her within 1.2 s | happy eyes, ω mouth, full blush; she leans in; hearts rise |
+| sleep | 75 s without a pointer move, press, flight or new words | lids shut, head drooped, slow breathing, little z's |
+| startle | waking | wide eyes, a small hop |
+
+In between, every 6 to 12 s, a small idle action: a glance to each side, a
+stretch, a wiggle or a double blink. Reduced motion keeps every reaction in
+the face (no squash, wobble, hop, particles or idle actions). The listeners
+sit on `window` and `document`, so the layer keeps `pointer-events: none`:
+a press on her is only noticed and the click goes on to whatever is under
+her; a press on a button, link, field, menu, dialog or recreated window is
+never a boop. The hearts and z's are sprites in `guide/effects.mjs`, drawn
+to small canvases by the layer like the petals and sparkles.
+
+To check the look without the app: the preview page and the hidden-window
+renderer used for this pass live in the session scratchpad, not in the
+repository; `node scripts/smoke.mjs --shots <dir>` captures her in the app.
+
+### Sources read for this pass
+
+- Duolingo, illustration guidelines (design.duolingo.com) and the blog posts
+  "Shape language: Duolingo's art style", "Building character" and "World
+  character visemes" (read October 26, 2026): rounded basic shapes, the
+  fewest shapes possible, large geometric eyes, exaggerated key details,
+  bright colours; idle behaviour under everything, a reaction state at the
+  end of each exercise.
+- Clip Studio Tips, "How to draw chibi body ratio" and "The best way to pose
+  chibi characters" (read October 26, 2026): two to three heads tall, eyes
+  about a third of the face, short rounded limbs, no neck.
+- Three.js documentation for `MeshToonMaterial` and `gradientMap`; the
+  inverted-hull outline technique.
+- page-mascot (GitHub, MIT) and Rive and Framer mascot listings (read
+  October 26, 2026): an idle loop under continuous pointer tracking, short
+  interrupt reactions that hand control back, reduced motion honoured.

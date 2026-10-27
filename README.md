@@ -36,8 +36,8 @@ security model, and what has and has not been verified on Windows.
 
 ## What you will see
 
-- **Rosie's welcome** (first launch only): Rosie, the trainer's guide, a small
-  plush rose in 3D adapted from the Cal Poly Rose Float logo (see
+- **Rosie's welcome** (first launch only): Rosie, the trainer's guide, a
+  chibi toon rose in 3D adapted from the Cal Poly Rose Float logo (see
   `docs/GUIDE_DESIGN.md`), appears over a dimmed Home and talks through three
   short beats in her speech bubble; on the last one she flies to the Start
   button and points at it. Skip or Esc closes it; "Meet Rosie again" on Home
@@ -49,8 +49,12 @@ security model, and what has and has not been verified on Windows.
 - **Rosie, everywhere**: she floats over the whole window, flies to the control
   each step is about, points at it, and talks beside it; she bobs, blinks,
   follows the pointer with her eyes, cheers a pass with a hop and sparkles,
-  and winces at a miss. She keeps off the control you need and off the open
-  menus, and never blocks a click; in a crowded or very small window she may
+  and winces at a miss. She also reacts to you: she turns toward a nearby
+  pointer, perks up when it rests on her, squashes and giggles when clicked
+  (three quick clicks make her dizzy), floats hearts when you stroke her
+  head, fidgets now and then, and dozes off after a long quiet spell. She
+  keeps off the control you need and off the open menus, and never blocks a
+  click, even a click on her; in a crowded or very small window she may
   stand over other parts of the screen. Without WebGL she falls back to flat
   sprites.
 - **A level's lesson map**: lessons grouped by what they teach (the interface,

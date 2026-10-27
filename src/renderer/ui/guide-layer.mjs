@@ -13,12 +13,17 @@ import { createStage } from '../guide/stage.mjs';
 import { buildRosie, poseFor, applyPose, COLORS } from '../guide/rosie-model.mjs';
 import { FACE_SIZE, faceParams, drawFace } from '../guide/face.mjs';
 import { createEffects } from '../guide/effects.mjs';
+import { createInteraction } from '../logic/guide-interaction.mjs';
 
 const INERT_SELECTORS = ['header', 'main', '#persistence-notice'];
 const WELCOME_LABEL = 'Welcome from Rosie, the guide';
 const HEAD_STAGE_Y = 0.5; // where her head sits in stage units, for the burst
 const TRAIL_SPEED = 160; // px/s above which she sheds petals
 const TRAIL_EVERY = 0.045;
+const HEARTS_EVERY = 0.55; // while she is petted
+const DOZE_EVERY = 1.6; // while she sleeps
+// A press on one of these is a click the learner meant for the page, never a boop.
+const INTERACTIVE = 'button, a, input, select, textarea, summary, label, [role="button"], [role="menuitem"], [role="tab"], [role="option"], dialog, .pc-menu, .win';
 
 function makeSpriteTexture(THREE, kind) {
   const c = document.createElement('canvas');
@@ -35,6 +40,22 @@ function makeSpriteTexture(THREE, kind) {
     }
     ctx.closePath();
     ctx.fill();
+  } else if (kind === 'heart') {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(32, 56);
+    ctx.bezierCurveTo(6, 36, 4, 14, 20, 12);
+    ctx.bezierCurveTo(27, 11, 31, 16, 32, 20);
+    ctx.bezierCurveTo(33, 16, 37, 11, 44, 12);
+    ctx.bezierCurveTo(60, 14, 58, 36, 32, 56);
+    ctx.closePath();
+    ctx.fill();
+  } else if (kind === 'zzz') {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('z', 32, 34);
   } else {
     const g = ctx.createRadialGradient(28, 26, 4, 32, 32, 30);
     g.addColorStop(0, 'rgba(255, 255, 255, 1)');
@@ -46,27 +67,6 @@ function makeSpriteTexture(THREE, kind) {
   }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
-function makeFuzzTexture(THREE) {
-  const n = 128;
-  const c = document.createElement('canvas');
-  c.width = n;
-  c.height = n;
-  const ctx = c.getContext('2d');
-  const img = ctx.createImageData(n, n);
-  for (let i = 0; i < n * n; i += 1) {
-    img.data[i * 4] = 128 + (Math.random() - 0.5) * 48;
-    img.data[i * 4 + 1] = 128 + (Math.random() - 0.5) * 48;
-    img.data[i * 4 + 2] = 255;
-    img.data[i * 4 + 3] = 255;
-  }
-  ctx.putImageData(img, 0, 0);
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = THREE.RepeatWrapping;
-  t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(6, 6);
   return t;
 }
 
@@ -116,7 +116,7 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       faceTexture = new THREE.CanvasTexture(faceCanvas);
       faceTexture.colorSpace = THREE.SRGBColorSpace;
       faceTexture.anisotropy = 4;
-      model = buildRosie(THREE, { faceTexture, fuzzTexture: makeFuzzTexture(THREE) });
+      model = buildRosie(THREE, { faceTexture });
       stage.root.add(model.root);
       fx = createEffects(THREE, stage.scene, { makeTexture: (kind) => makeSpriteTexture(THREE, kind) });
       canvas.addEventListener('webglcontextlost', (event) => {
@@ -144,6 +144,13 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
   let expressionAt = 0;
   let talkAt = -10;
   let pendingBurst = false;
+  let pendingPuff = false;
+  const interaction = createInteraction();
+  let mood = 'none';
+  let moodNear = 0;
+  let heartsAt = -10;
+  let dozeAt = -10;
+  let boops = 0;
   let flights = 0;
   let talks = 0;
   let placed = false;
@@ -166,7 +173,21 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
   const pointer = { x: -1, y: -1 };
   let bubbleSize = { w: 320, h: 120 };
 
-  window.addEventListener('pointermove', (event) => { pointer.x = event.clientX; pointer.y = event.clientY; }, { passive: true });
+  const herBox = () => (placed ? visibleBox({ x: pos.x.x, y: pos.y.x }) : null);
+  window.addEventListener('pointermove', (event) => {
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    interaction.pointerMove({ x: pointer.x, y: pointer.y, clock, box: herBox() });
+  }, { passive: true });
+  // Her layer never takes the pointer; a press on her is only noticed, and the
+  // click goes on to whatever is under her. A press on a control is never a boop.
+  window.addEventListener('pointerdown', (event) => {
+    if (scene === 'none' || layer.hidden) return;
+    const t = event.target;
+    const interactive = Boolean(t && t.closest && t.closest(INTERACTIVE));
+    if (interaction.pointerDown({ x: event.clientX, y: event.clientY, clock, box: herBox(), interactive })) { pendingPuff = true; boops += 1; }
+  }, { passive: true, capture: true });
+  document.addEventListener('pointerleave', () => { pointer.x = -1; pointer.y = -1; interaction.pointerLeave(); });
   document.addEventListener('keydown', (event) => {
     if (modal && event.key === 'Escape') { event.preventDefault(); dispatch({ type: 'welcome-done' }); }
   });
@@ -283,12 +304,16 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
 
   function drawFaceIfNeeded(look, blink, mouthOpen) {
     if (!faceCanvas) return;
-    const key = [expression, Math.round(look.x * 20), Math.round(look.y * 20), Math.round(blink * 10), Math.round(mouthOpen * 8)].join(',');
+    const key = [expression, mood, Math.round(look.x * 20), Math.round(look.y * 20), Math.round(blink * 10), Math.round(mouthOpen * 8)].join(',');
     if (key === faceKey) return;
     faceKey = key;
-    drawFace(faceCanvas.getContext('2d'), faceParams(expression), { look, blink, mouthOpen });
+    drawFace(faceCanvas.getContext('2d'), faceParams(expression, mood), { look, blink, mouthOpen });
     faceTexture.needsUpdate = true;
   }
+
+  // An idle glance: her eyes go to one side, then the other.
+  const glanceLook = (since) => ({ x: since < 0.6 ? -0.9 : 0.9, y: 0.15 });
+  const doubleBlink = (since) => Math.max(blinkAmount(since), blinkAmount(since - 0.24));
 
   function tick(now) {
     rafId = 0;
@@ -323,12 +348,16 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
 
     // Blink schedule.
     if (clock - blinkAt >= blinkNext) { blinkAt = clock; blinkNext = nextBlinkDelay(); }
-    const blink = blinkAmount(clock - blinkAt);
     const talk = talkEnvelope(clock - talkAt);
-    const look = lookAt();
+    const snap = interaction.update(clock, { reduced });
+    mood = snap.mood;
+    moodNear = snap.near;
+    const idle = snap.idle;
+    const look = idle && idle.action === 'glance' ? glanceLook(idle.since) : lookAt();
+    const blink = idle && idle.action === 'blink2' ? doubleBlink(idle.since) : blinkAmount(clock - blinkAt);
 
     if (mode === 'webgl' && model) {
-      const pose = poseFor({ expression, t: clock - expressionAt, phase: clock, look, facing, reduced });
+      const pose = poseFor({ expression, t: clock - expressionAt, phase: clock, look, facing, reduced, mood, moodT: snap.since, idle, toward: snap.toward, near: snap.near });
       const lean = reduced ? { roll: 0, pitch: 0 } : bank(pos.x.v, pos.y.v);
       pose.root.roll += lean.roll;
       pose.root.pitch += lean.pitch;
@@ -340,6 +369,9 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       drawFaceIfNeeded(look, blink, reduced ? 0 : talk.mouth);
       if (fx) {
         if (pendingBurst) { pendingBurst = false; if (!reduced) fx.burst(0, HEAD_STAGE_Y, 0.3); }
+        if (pendingPuff) { pendingPuff = false; if (!reduced) fx.puff(0, HEAD_STAGE_Y, 0.4); }
+        if (mood === 'pet' && clock - heartsAt >= HEARTS_EVERY) { heartsAt = clock; if (!reduced) fx.hearts(0, HEAD_STAGE_Y + 0.7, 0.3); }
+        if (mood === 'sleep' && clock - dozeAt >= DOZE_EVERY) { dozeAt = clock; if (!reduced) fx.doze(0.55, HEAD_STAGE_Y + 0.6, 0.3); }
         if (!reduced && speed > TRAIL_SPEED) {
           trailClock += dt;
           if (trailClock >= TRAIL_EVERY) { trailClock = 0; fx.trail(0, 0.1, 0.2, pos.x.v, pos.y.v); }
@@ -413,7 +445,7 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
     setBubbleRole(scene);
 
     const nextAnchorKey = `${next.anchor.kind}:${next.anchor.id || ''}`;
-    if (nextAnchorKey !== anchorKey) { anchorKey = nextAnchorKey; if (placed) flights += 1; }
+    if (nextAnchorKey !== anchorKey) { anchorKey = nextAnchorKey; if (placed) flights += 1; interaction.activity(clock); }
 
     const nextTextKey = [next.title || '', next.feedbackOk, next.welcome ? next.welcome.step : '', ...next.lines].join('\u0001');
     if (nextTextKey !== textKey) {
@@ -421,6 +453,7 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       buildBubble(next);
       talks += 1;
       talkAt = clock;
+      interaction.activity(clock);
     }
     if (next.expression !== expression) {
       expression = next.expression;
@@ -451,6 +484,9 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       bubbleRect: b,
       bubbleText: bubble.textContent,
       expression,
+      mood,
+      near: moodNear,
+      boops,
       facing,
       side: goal ? goal.side : null,
       flying,
