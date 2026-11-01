@@ -9,15 +9,19 @@
   <script type="module" src="app.mjs"></script>
 </head>
 <body>
+  <section id="film" class="film" aria-label="Orientation film" hidden></section>
   <div id="guide-layer" hidden>
     <div id="welcome-backdrop" hidden></div>
     <div id="rosie" aria-hidden="true"></div>
     <div id="rosie-bubble" class="rosie-bubble" hidden></div>
+    <button type="button" id="rosie-help" class="rosie-help" data-control="rosie-help" data-react="help" hidden>Click mascot to get help</button>
+    <div id="rosie-help-pop" class="rosie-help-pop" role="dialog" aria-label="Rosie’s help" hidden></div>
   </div>
+  <div id="demo-cursor" class="demo-cursor" aria-hidden="true" hidden></div>
   <header class="identity">
     <div class="identity-name">
-      <strong>Roseflow PC Mac Training</strong>
-      <span>Independent training app, simulation only. Nothing here connects to a controller or sends a command.</span>
+      <strong>Roseflow — Cal Poly Rose Float Training</strong>
+      <span>Pomona × San Luis Obispo · Learn by Doing. Independent training app, simulation only: nothing here connects to a controller or sends a command.</span>
     </div>
     <nav class="topnav" aria-label="App sections" id="topnav">
       <button type="button" id="nav-home" data-control="nav-home">Home</button>
@@ -35,6 +39,7 @@
     <p id="panel-announcer" class="sr-only" role="status" aria-live="polite"></p>
     <section id="desk" class="desk" aria-label="Recreated PC•MACs windows and the simulated float" hidden>
       <div id="pcmacs" class="pcmacs"></div>
+      <aside id="robot" class="robot-preview" data-part="robot" data-control="robot-preview" aria-label="Robot Rosie, simulated preview" hidden></aside>
       <div id="float"></div>
     </section>
     <aside id="handbook" class="handbook" aria-label="Handbook" hidden></aside>
@@ -43,7 +48,9 @@
   <div id="tooltip" role="tooltip" hidden></div>
   <dialog id="help-dialog" aria-labelledby="help-title"></dialog>
   <dialog id="photo-dialog" aria-label="Reference photo"></dialog>
-  <dialog id="confirm-dialog" aria-labelledby="confirm-title"></dialog>
+  <dialog id="progress-dialog" aria-labelledby="progress-title"></dialog>
+  <div id="guard-backdrop" hidden></div>
+  <dialog id="restart-dialog" class="guard-dialog" aria-labelledby="restart-title"></dialog>
   <dialog id="control-dialog" aria-labelledby="control-title"></dialog>
   <dialog id="value-dialog" class="w8-dialog" aria-labelledby="value-title"></dialog>
 </body>

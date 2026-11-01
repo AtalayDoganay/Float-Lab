@@ -9,6 +9,7 @@ import path from 'node:path';
 import { validateProgress, migrateProgress } from '../shared/progress-schema.mjs';
 
 export const PROGRESS_FILE = 'progress.json';
+export const SNAPSHOTS_KEPT = 3;
 
 function describeError(error) {
   return error && error.code ? `${error.code}: ${error.message}` : String(error && error.message ? error.message : error);
@@ -80,10 +81,27 @@ export function createProgressStore({ dir, now = () => new Date() }) {
     }
   }
 
+  // Keep the three newest previous-run snapshots; older ones are removed.
+  async function pruneSnapshots() {
+    const names = (await fs.readdir(dir)).filter((f) => /^progress\.previous-run-.*\.json$/.test(f)).sort();
+    for (const name of names.slice(0, Math.max(0, names.length - SNAPSHOTS_KEPT))) await fs.rm(path.join(dir, name), { force: true });
+  }
+
+  // A restart is recoverable: the file is copied to progress.previous-run-<stamp>.json before it is removed.
   async function reset() {
     try {
+      let snapshotPath = null;
+      try {
+        const stamp = now().toISOString().replace(/[:.]/g, '-');
+        snapshotPath = path.join(dir, `progress.previous-run-${stamp}.json`);
+        await fs.copyFile(filePath, snapshotPath);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        snapshotPath = null;
+      }
       await fs.rm(filePath, { force: true });
-      return { ok: true };
+      if (snapshotPath) await pruneSnapshots();
+      return { ok: true, snapshotPath };
     } catch (error) {
       return { ok: false, error: describeError(error) };
     }

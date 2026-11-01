@@ -38,6 +38,16 @@ export function channelName(id) {
   return [...ANALOG_CHANNELS, ...DIGITAL_CHANNELS].find((c) => c.id === id)?.name ?? id;
 }
 
+// The label the Edit View shows for a channel. A fixture may name channels
+// (the first segment's show calls its digitals "Digital 0" and "Digital 1");
+// otherwise the trainer's names, digitals with the " Digital" suffix of the
+// manual's capture.
+export function channelLabel(sim, id) {
+  const named = sim && sim.names ? sim.names[id] : undefined;
+  if (typeof named === 'string') return named;
+  return id.startsWith('light-') ? `${channelName(id)} Digital` : channelName(id);
+}
+
 export function percentOf(value) {
   return (value / 255) * 100;
 }

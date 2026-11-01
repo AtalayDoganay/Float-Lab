@@ -9,6 +9,10 @@ contextBridge.exposeInMainWorld('roseflow', {
     save: (doc) => ipcRenderer.invoke('progress:save', doc),
     reset: () => ipcRenderer.invoke('progress:reset'),
   },
+  prefs: {
+    load: () => ipcRenderer.invoke('prefs:load'),
+    save: (prefs) => ipcRenderer.invoke('prefs:save', prefs),
+  },
   links: {
     open: (url) => ipcRenderer.invoke('links:open', String(url)),
   },

@@ -10,3 +10,5 @@ coverage/
 Thumbs.db
 # Scratch user-data directories created by the smoke test
 .smoke-userdata/
+# Frame folders written by the record scenario (the MP4s beside them are the review material)
+docs/review/*/*/

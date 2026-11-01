@@ -1,10 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { guidePlan, homeWhere } from '../src/renderer/logic/guide-plan.mjs';
+import { guidePlan } from '../src/renderer/logic/guide-plan.mjs';
 import { lessonStatus, nextLessonFor } from '../src/renderer/logic/level-status.mjs';
 import { LEVEL_BY_ID, LESSONS_BY_ID, stepKey } from '../src/renderer/content/levels.mjs';
 import { WELCOME, LINES } from '../src/renderer/content/mascot.mjs';
 import { expressionFor, bubbleText } from '../src/renderer/logic/step-beats.mjs';
+import { emptyTraining } from '../src/shared/progress-schema.mjs';
 
 const basic = LEVEL_BY_ID.basic;
 const first = LESSONS_BY_ID[basic.lessons[0]];
@@ -19,6 +20,9 @@ function state(over = {}) {
     sim: { frame: 0, mode: 'stop' },
     saved: null,
     guide: { welcomed: true, open: false, step: 0 },
+    persistence: { loaded: true, error: null, recovered: null },
+    training: emptyTraining(),
+    intro: { shown: true, rosie: { expression: 'wave', line: null } },
     ...over,
   };
 }
@@ -39,30 +43,56 @@ test('the welcome puts her at the centre, then at the primary action on the last
   assert.deepEqual(p.lines, [WELCOME[0].text]);
   assert.deepEqual(p.welcome, { step: 0, total: 3, button: 'Next', last: false, skip: 'Skip' });
   const last = guidePlan({ state: state({ guide: { welcomed: false, open: true, step: 2 } }), run: null });
-  assert.deepEqual(last.anchor, { kind: 'control', id: 'start-learning' });
+  assert.deepEqual(last.anchor, { kind: 'control', id: 'start-training' });
   assert.equal(last.welcome.button, 'Let’s go');
   assert.equal(last.welcome.last, true);
   const mid = guidePlan({ state: state({ level: 'basic', lesson: { id: first.id, stepIndex: 0, beat: 'look', feedback: null, demo: idle, justFinished: null }, guide: { welcomed: true, open: true, step: 2 } }), run: null });
-  assert.deepEqual(mid.anchor, { kind: 'control', id: 'resume' });
+  assert.deepEqual(mid.anchor, { kind: 'control', id: 'continue-training' });
 });
 
-test('home anchors her to Start with Basic or Continue and says where the learner is', () => {
+test('the film docks her at the film and gives her its cues', () => {
+  const p = guidePlan({ state: state({ view: 'intro', intro: { shown: false, rosie: { expression: 'point', line: 'Ready?' } } }), run: null });
+  assert.equal(p.scene, 'intro');
+  assert.deepEqual(p.anchor, { kind: 'dock', id: 'film-rosie-dock' });
+  assert.equal(p.expression, 'point');
+  assert.deepEqual(p.lines, ['Ready?']);
+});
+
+test('the hub anchors her to Start or Continue and says where the learner is', () => {
   const fresh = guidePlan({ state: state(), run: null });
   assert.equal(fresh.scene, 'home');
-  assert.deepEqual(fresh.anchor, { kind: 'control', id: 'start-learning' });
+  assert.deepEqual(fresh.anchor, { kind: 'dock', id: 'hub-rosie-dock' }, 'she has her own place beside the actions, never over them');
   assert.equal(fresh.expression, 'wave');
-  assert.deepEqual(fresh.lines, [LINES.homeFirst()]);
-  assert.equal(homeWhere(state()), null);
+  assert.deepEqual(fresh.lines, [LINES.hubFirst()]);
 
-  const back = state({ level: 'basic', saved: { view: 'lesson', level: 'basic', lessonId: first.id, stepIndex: 1 }, lesson: { id: first.id, stepIndex: 1, beat: 'look', feedback: null, demo: idle, justFinished: null } });
-  const returning = guidePlan({ state: back, run: null });
-  assert.deepEqual(returning.anchor, { kind: 'control', id: 'resume' });
-  assert.ok(returning.lines[0].startsWith('Welcome back') && returning.lines[0].includes(first.title) && returning.lines[0].includes('step 2 of'), returning.lines[0]);
-  assert.equal(homeWhere(back).back, true);
+  const legacy = state({ level: 'basic', saved: { view: 'lesson', level: 'basic', lessonId: first.id, stepIndex: 1 } });
+  const returning = guidePlan({ state: legacy, run: null });
+  assert.deepEqual(returning.lines, [LINES.hubLegacy({ lessonTitle: first.title })]);
 
-  const moved = state({ level: 'basic', lesson: { id: first.id, stepIndex: 2, beat: 'look', feedback: null, demo: idle, justFinished: null } });
-  const current = guidePlan({ state: moved, run: null });
-  assert.ok(current.lines[0].startsWith('You are on') && current.lines[0].includes('step 3 of'), current.lines[0]);
+  const course = state({ training: { ...emptyTraining(), checkpoint: { lessonId: 's1-orientation', stepIndex: 1 }, lastActivityAt: '2026-10-31T10:00:00.000Z' } });
+  const c = guidePlan({ state: course, run: null });
+  assert.deepEqual(c.lines, [LINES.hubReturning({ lessonTitle: 'Meet the PC•MACs screen', stepIndex: 1, stepTotal: LESSONS_BY_ID['s1-orientation'].steps.length })]);
+
+  const done = guidePlan({ state: state({ training: { ...emptyTraining(), completed: true } }), run: null });
+  assert.equal(done.expression, 'cheer');
+  assert.deepEqual(done.lines, [LINES.hubDone()]);
+
+  const unreadable = guidePlan({ state: state({ persistence: { loaded: true, error: null, recovered: { reason: 'invalid-json', quarantinedPath: 'x' } } }), run: null });
+  assert.deepEqual(unreadable.lines, [LINES.hubUnreadable()]);
+});
+
+test('the course map anchors her to Begin and cheers a finished lesson or the whole segment', () => {
+  const p = guidePlan({ state: state({ view: 'course', level: 'course' }), run: null });
+  assert.equal(p.scene, 'course');
+  assert.deepEqual(p.anchor, { kind: 'control', id: 'course-begin' });
+  assert.equal(p.expression, 'point');
+  assert.deepEqual(p.lines, [LINES.courseBegin()]);
+  const started = state({ view: 'course', level: 'course', learning: { completedSteps: [stepKey('s1-orientation', 'workspace')], completedLessons: [], missedLessons: [] } });
+  assert.deepEqual(guidePlan({ state: started, run: null }).lines, [LINES.courseResume()]);
+  const all = state({ view: 'course', level: 'course', learning: { completedSteps: [], completedLessons: ['s1-orientation', 's1-digital-vs-analog', 's1-one-second-on'], missedLessons: [] } });
+  const a = guidePlan({ state: all, run: null });
+  assert.equal(a.expression, 'cheer');
+  assert.deepEqual(a.lines, [LINES.courseDone()]);
 });
 
 test('the level map anchors her to Begin and cheers a finished lesson or level', () => {

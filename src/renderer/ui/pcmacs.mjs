@@ -198,6 +198,21 @@ export function mountPcmacs(container, { dispatch, terminalHost }) {
     valueInput.select();
   }
 
+  // The demonstration route into a menu: the same open() a click on its title runs.
+  function openMenuById(id) {
+    const b = menubar.querySelector(`[data-menu="${id}"]`);
+    if (!b) return false;
+    const m = MENUS.find((mm) => mm.id === id);
+    if (m && m.items) { if (!(openMenu && openMenu.id === id)) open({ id, anchor: b }); return true; }
+    b.click();
+    return true;
+  }
+
+  // A menu item by its label, for the demonstration cursor to click (the open menu's real element).
+  function menuItemElement(label) {
+    return shown.find(({ it }) => it.label === label)?.b || null;
+  }
+
   function update(s, revealed) {
     state = s;
     // The frame appears as soon as any recreated window is in use.
@@ -210,5 +225,5 @@ export function mountPcmacs(container, { dispatch, terminalHost }) {
     if (openMenu) refreshItems();
   }
 
-  return { update, openValueDialog, closeMenus: close };
+  return { update, openValueDialog, closeMenus: close, openMenu: openMenuById, menuItemElement, menuBarElement: (id) => menubar.querySelector(`[data-menu="${id}"]`) };
 }

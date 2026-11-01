@@ -1,8 +1,10 @@
 # Verification record
 
-The newest record is `docs/VERIFICATION-2026-10-24.md` (Rosie in 3D, the
-floating guide). Before it, `docs/VERIFICATION-2026-10-23.md` (Rosie, the
-guide, and the simplified trainer). The record below is for the October 7,
+The newest record is `docs/VERIFICATION-2026-10-31.md` (the Revision 4
+build: the film, the hub, the guarded restart, the first digital segment,
+Robot Rosie, the 24 expressions). Before it, `docs/VERIFICATION-2026-10-24.md`
+(Rosie in 3D, the floating guide) and `docs/VERIFICATION-2026-10-23.md`
+(Rosie, the guide, and the simplified trainer). The record below is for the October 7,
 2026 PC•MACs interface recreation and is unchanged.
 
 Date: October 7, 2026 (PC•MACs interface recreation, One File task revision 1

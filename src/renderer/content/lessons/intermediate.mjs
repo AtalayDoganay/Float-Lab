@@ -21,7 +21,7 @@ export const INTERMEDIATE_LESSONS = [
         concept: 'concept:frame-rate',
       }),
       explain('block-frames', {
-        target: 'menu-zoom',
+        target: 'menu-time-in',
         title: 'Time In and Time Out',
         explain: 'Time In and Time Out on the menu bar zoom the Edit View: in, to see single frames; out, to see more of the show. Zoomed in, the ruler labels every few frames and the scroll bar under the panes moves through the show. The fields at the bottom left and right always say what time the window’s edges show.',
         demo: { intro: 'Watch Time In twice, then Time Out twice.', actions: [{ type: 'zoom', dir: 1 }, { wait: 900 }, { type: 'zoom', dir: 1 }, { wait: 1200 }, { type: 'zoom', dir: -1 }, { wait: 600 }, { type: 'zoom', dir: -1 }], outro: 'The show did not change; only how much of it fits in the window.' },

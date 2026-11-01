@@ -22,6 +22,10 @@ const base = (id, kind, o) => ({
   concept: o.concept ?? null,
   photo: o.photo ?? null,
   demo: o.demo ?? null,
+  // A narrated film (cue-player beats) shown in the watch beat instead of a plain demo.
+  film: o.film ?? null,
+  // Fixture actions an explain step applies on entry (a practice step keeps its own under `practice.setup`).
+  setup: o.setup ?? [],
   questionId: o.questionId ?? null,
   exerciseStep: o.exerciseStep ?? null,
 });

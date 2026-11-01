@@ -108,12 +108,12 @@ export function buildRosie(THREE, { faceTexture, gradientMap = makeGradientMap(T
   root.name = 'root';
   root.position.y = BASE_Y;
 
-  // ---- body: a short stem with two rounded thorn nubs
+  // ---- body: a broad, soft torso (reference B) with two rounded thorn nubs
   const body = new THREE.Group();
   body.name = 'body';
-  body.add(piece(capsule, mats.stem, mats.leafInk, { pos: [0, 0.64, 0], scale: [0.23, 0.23, 0.23], name: 'stem' }));
-  body.add(ball(mats.stemDeep, mats.leafInk, 0.06, { pos: [0.22, 0.5, 0.08], scale: [1, 0.7, 0.7], rot: [0, 0, -0.6] }));
-  body.add(ball(mats.stemDeep, mats.leafInk, 0.05, { pos: [-0.21, 0.7, 0.1], scale: [1, 0.7, 0.7], rot: [0, 0, 0.7] }));
+  body.add(ball(mats.stem, mats.leafInk, 1, { pos: [0, 0.62, 0], scale: [0.46, 0.5, 0.4], name: 'torso' }));
+  body.add(ball(mats.stemDeep, mats.leafInk, 0.06, { pos: [0.4, 0.5, 0.14], scale: [1, 0.7, 0.7], rot: [0, 0, -0.6] }));
+  body.add(ball(mats.stemDeep, mats.leafInk, 0.05, { pos: [-0.38, 0.74, 0.16], scale: [1, 0.7, 0.7], rot: [0, 0, 0.7] }));
   root.add(body);
 
   // ---- leaf collar under the head
@@ -128,32 +128,32 @@ export function buildRosie(THREE, { faceTexture, gradientMap = makeGradientMap(T
   }
   root.add(leaves);
 
-  // ---- feet
+  // ---- feet: round and a little bigger, under the broad torso
   const feet = new THREE.Group();
   feet.name = 'feet';
-  for (const x of [-0.17, 0.17]) feet.add(ball(mats.stemDeep, mats.leafInk, 1, { pos: [x, 0.1, 0.1], scale: [0.15, 0.1, 0.19] }));
+  for (const x of [-0.2, 0.2]) feet.add(ball(mats.stemDeep, mats.leafInk, 1, { pos: [x, 0.1, 0.12], scale: [0.19, 0.12, 0.22] }));
   root.add(feet);
 
-  // ---- arms: stubby leaf mittens on shoulder pivots. Each shoulder sits in
-  // a frame turned half a turn about y, so a positive z rotation raises the
-  // left arm and a negative one raises the right.
+  // ---- arms: short rounded capsules with mitten tips on shoulder pivots.
+  // Each shoulder sits in a frame turned half a turn about y, so a positive
+  // z rotation raises the left arm and a negative one raises the right.
   const shoulder = (name, x, dir) => {
     const mirror = new THREE.Group();
-    mirror.position.set(x, 0.93, 0.15);
+    mirror.position.set(x, 0.86, 0.12);
     mirror.rotation.y = Math.PI;
     const pivot = new THREE.Group();
     pivot.name = name;
     const arm = new THREE.Group();
     arm.name = name === 'shoulderL' ? 'armL' : 'armR';
-    arm.add(ball(mats.arm, mats.leafInk, 1, { pos: [dir * 0.22, 0, 0], scale: [0.24, 0.1, 0.13] }));
-    arm.add(ball(mats.arm, mats.leafInk, 0.11, { pos: [dir * 0.43, 0.01, 0], scale: [1, 0.95, 0.9] }));
+    arm.add(piece(capsule, mats.arm, mats.leafInk, { pos: [dir * 0.17, 0, 0], scale: [0.085, 0.085, 0.085], rot: [0, 0, Math.PI / 2] }));
+    arm.add(ball(mats.arm, mats.leafInk, 0.12, { pos: [dir * 0.36, 0.005, 0], scale: [1, 0.95, 0.9] }));
     pivot.add(arm);
     mirror.add(pivot);
     root.add(mirror);
     return { pivot, arm };
   };
-  const left = shoulder('shoulderL', -0.26, 1);
-  const right = shoulder('shoulderR', 0.26, -1);
+  const left = shoulder('shoulderL', -0.42, 1);
+  const right = shoulder('shoulderR', 0.42, -1);
 
   // ---- head: the bloom (core, two rings of chunky petals, a curl on top)
   const head = new THREE.Group();
@@ -200,16 +200,51 @@ export function buildRosie(THREE, { faceTexture, gradientMap = makeGradientMap(T
   drop.position.set(0.7, 0.3, 0.5);
   drop.visible = false;
   head.add(drop);
+
+  // ---- glasses: a removable accessory on her head (two rims, a bridge, two
+  // temples), so they stay put through every head turn. Unlit ink, crisp.
+  const glasses = new THREE.Group();
+  glasses.name = 'glasses';
+  const inkFrame = new THREE.MeshBasicMaterial({ color: new THREE.Color(COLORS.ink) });
+  const rim = new THREE.TorusGeometry(0.2, 0.024, 8, 32);
+  for (const x of [-0.3, 0.3]) {
+    const r = new THREE.Mesh(rim, inkFrame);
+    r.position.set(x, -0.06, 0.8);
+    glasses.add(r);
+  }
+  const bridge = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.1, 4, 8), inkFrame);
+  bridge.rotation.z = Math.PI / 2;
+  bridge.position.set(0, -0.03, 0.82);
+  glasses.add(bridge);
+  for (const x of [-0.5, 0.5]) {
+    const temple = new THREE.Mesh(new THREE.CapsuleGeometry(0.018, 0.5, 4, 8), inkFrame);
+    temple.rotation.x = Math.PI / 2;
+    temple.position.set(x, -0.04, 0.52);
+    glasses.add(temple);
+  }
+  glasses.visible = false;
+  head.add(glasses);
   root.add(head);
 
-  const parts = { root, head, bloom, face, body, armL: left.arm, armR: right.arm, shoulderL: left.pivot, shoulderR: right.pivot, leaves, feet, drop };
+  const parts = { root, head, bloom, face, body, armL: left.arm, armR: right.arm, shoulderL: left.pivot, shoulderR: right.pivot, leaves, feet, drop, glasses };
   return { root, parts, materials: mats };
 }
+
+// Gesture-bearing legacy names keep their poses; the palette's names carry
+// the family's body language. Everything else is the expression's face.
+const FAMILY_OF = Object.freeze(Object.fromEntries([
+  ...['sternness', 'indignation', 'anger', 'rage'].map((n, i) => [n, ['firmness', i]]),
+  ...['disdain', 'aversion', 'disgust', 'revulsion'].map((n, i) => [n, ['dislike', i]]),
+  ...['concern', 'anxiety', 'fear', 'terror'].map((n, i) => [n, ['worry', i]]),
+  ...['satisfaction', 'amusement', 'joy', 'laughter'].map((n, i) => [n, ['happiness', i]]),
+  ...['dejection', 'melancholy', 'sadness', 'grief'].map((n, i) => [n, ['sadness', i]]),
+  ...['alertness', 'wonder', 'surprise', 'shock'].map((n, i) => [n, ['discovery', i]]),
+]));
 
 // A bell from 0 to 1 and back over `d` seconds, 0 outside it.
 const bell = (t, d) => (t >= 0 && t < d ? Math.sin((Math.PI * t) / d) : 0);
 
-export function poseFor({ expression, t = 0, phase = 0, look = { x: 0, y: 0 }, facing = 'right', reduced = false, mood = 'none', moodT = 0, idle = null, toward = { x: 0, y: 0 }, near = 0 }) {
+export function poseFor({ expression, t = 0, phase = 0, look = { x: 0, y: 0 }, facing = 'right', reduced = false, mood = 'none', moodT = 0, idle = null, toward = { x: 0, y: 0 }, near = 0, glasses = false }) {
   const bob = reduced ? { y: 0, yaw: 0 } : idleBob(phase);
   const pose = {
     root: { y: bob.y, yaw: bob.yaw, pitch: 0, roll: 0, sx: 1, sy: 1 },
@@ -218,8 +253,56 @@ export function poseFor({ expression, t = 0, phase = 0, look = { x: 0, y: 0 }, f
     armR: { x: 0, z: REST_ARM },
     drop: false,
     sparkle: 0,
+    glasses: Boolean(glasses),
   };
   const dir = facing === 'left' ? -1 : 1;
+  const fam = FAMILY_OF[expression];
+  if (fam) {
+    const [family, level] = fam;
+    const k = (level + 1) / 4; // intensity 0.25 .. 1
+    switch (family) {
+      case 'firmness':
+        // chin down, arms akimbo, a tremble at the top
+        pose.head.pitch += 0.08 + 0.1 * k;
+        pose.armL.z = -0.55; pose.armR.z = 0.55; pose.armL.x = -0.3; pose.armR.x = -0.3;
+        if (!reduced && level >= 2) pose.root.roll += 0.03 * k * Math.sin(t * 22);
+        break;
+      case 'dislike':
+        // head turned away, leaning back
+        pose.head.yaw += 0.35 * k * dir;
+        pose.root.pitch = -0.06 - 0.08 * k;
+        pose.armL.z = -0.8; pose.armR.z = 0.8;
+        break;
+      case 'worry':
+        // arms hugged in, a small tremble at fear and terror
+        pose.armL.z = -0.3 + 0.1 * k; pose.armR.z = 0.3 - 0.1 * k; pose.armL.x = -0.6; pose.armR.x = -0.6;
+        pose.root.pitch = 0.05 * k;
+        if (!reduced && level >= 2) { pose.root.roll += 0.02 * Math.sin(t * 26); pose.root.sy *= 1 - 0.01 * k; }
+        break;
+      case 'happiness':
+        pose.root.y += reduced ? 0 : 0.04 * k * Math.abs(Math.sin(t * Math.PI * 2.2));
+        pose.root.roll = reduced ? 0 : 0.05 * Math.sin(t * 2.5);
+        if (level >= 2) { pose.armL.z = -0.6 + 0.3 * k; pose.armR.z = 0.6 - 0.3 * k; }
+        if (level === 3) { pose.armL.z = 0.95; pose.armR.z = -0.95; pose.armL.x = -0.9; pose.armR.x = -0.9; pose.head.pitch -= 0.1; }
+        break;
+      case 'sadness':
+        // a droop that grows with intensity
+        pose.root.pitch = 0.06 + 0.22 * k;
+        pose.head.pitch += 0.05 + 0.15 * k;
+        pose.armL.z = -1.2; pose.armR.z = 1.2;
+        if (!reduced && level === 3) pose.root.sy *= 1 + 0.015 * Math.sin(t * 6);
+        break;
+      case 'discovery':
+        // head up and, at the top, arms thrown out
+        pose.head.pitch -= 0.05 + 0.1 * k;
+        pose.root.sy *= 1 + 0.02 * k;
+        if (level >= 2) { pose.armL.z = 0.3 + 0.5 * (level - 2); pose.armR.z = -0.3 - 0.5 * (level - 2); pose.armL.x = -0.6; pose.armR.x = -0.6; }
+        if (level === 3) { pose.armL.z = 0.8; pose.armR.z = -0.8; }
+        break;
+      default:
+        break;
+    }
+  }
   switch (expression) {
     case 'wave':
       // Raised arms swing outward and forward so they show beside her big head.
@@ -258,6 +341,18 @@ export function poseFor({ expression, t = 0, phase = 0, look = { x: 0, y: 0 }, f
       pose.armR.z = 1.3;
       if (t < 1 && !reduced) pose.head.yaw += 0.12 * Math.sin(t * Math.PI * 12) * (1 - t);
       pose.drop = true;
+      break;
+    case 'tickled':
+      // A wriggle with the arms hugged in; still under reduced motion.
+      pose.armL.z = -0.25;
+      pose.armR.z = 0.25;
+      pose.armL.x = -0.7;
+      pose.armR.x = -0.7;
+      if (!reduced) {
+        pose.root.roll = 0.14 * Math.sin(t * 18);
+        pose.root.y += 0.05 * Math.abs(Math.sin(t * 8));
+        pose.head.roll = 0.1 * Math.sin(t * 18 + 1);
+      }
       break;
     default:
       break;
@@ -346,4 +441,5 @@ export function applyPose(parts, pose) {
   parts.shoulderL.rotation.set(pose.armL.x, 0, pose.armL.z);
   parts.shoulderR.rotation.set(pose.armR.x, 0, pose.armR.z);
   parts.drop.visible = pose.drop;
+  if (parts.glasses) parts.glasses.visible = Boolean(pose.glasses);
 }

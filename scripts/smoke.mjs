@@ -4,7 +4,8 @@
 //
 //   npm run smoke
 //   node scripts/smoke.mjs --exe "out/Roseflow PC Mac Training-win32-x64/RoseflowPCMacTraining.exe"
-//   node scripts/smoke.mjs --shots <dir>
+//   node scripts/smoke.mjs --shots <dir>          review screenshots and contact sheets
+//   node scripts/smoke.mjs --only course,resume   a subset of scenarios
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -50,7 +51,8 @@ function launch(scenario) {
     let stderr = '';
     child.stdout.on('data', (d) => { stdout += d; });
     child.stderr.on('data', (d) => { stderr += d; });
-    const timer = setTimeout(() => child.kill(), 90000);
+    // The record scenario plays a film and two full flows in real time.
+    const timer = setTimeout(() => child.kill(), scenario === 'record' ? 360000 : 90000);
     child.on('close', (code) => {
       clearTimeout(timer);
       const line = stdout.split(/\r?\n/).find((l) => l.startsWith('SMOKE_RESULT '));
@@ -73,9 +75,17 @@ const LEGACY_V2 = {
   migrated: null,
 };
 
-const sequence = shotsDir ? ['shots'] : ['first', 'resume', 'malformed', 'savefail', 'legacy', 'legacy2', 'practice'];
+const onlyIndex = args.indexOf('--only');
+const only = onlyIndex >= 0 ? args[onlyIndex + 1].split(',') : null;
+// --shots <dir> captures the review screenshots and contact sheets while running the review-flow scenarios.
+// (`resume` expects the profile `first` leaves behind, so it is not part of this sequence.)
+const sequence = shotsDir ? ['course', 'sheet'] : (only || ['first', 'resume', 'malformed', 'savefail', 'loadfail', 'legacy', 'legacy2', 'practice', 'course']);
 const summary = [];
 for (const scenario of sequence) {
+  if (scenario === 'course') {
+    // The review flow starts from a fresh profile.
+    await fs.rm(path.join(userData, 'progress.json'), { force: true });
+  }
   if (scenario === 'malformed') {
     await fs.writeFile(path.join(userData, 'progress.json'), '{ definitely not json', 'utf8');
   }

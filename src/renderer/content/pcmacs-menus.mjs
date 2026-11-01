@@ -92,8 +92,8 @@ export const MENUS = Object.freeze([
       item('Inbetweening...'), item('Cut/Paste...'), item('Rubberbanding...', 'Ctrl+F10'), item('Smoothing frames...'),
     ],
   },
-  { id: 'time-out', label: 'Time Out', gap: true, action: { type: 'zoom', dir: -1 }, control: 'menu-zoom' },
-  { id: 'time-in', label: 'Time In', action: { type: 'zoom', dir: 1 }, control: 'menu-zoom' },
+  { id: 'time-out', label: 'Time Out', gap: true, action: { type: 'zoom', dir: -1 }, control: 'menu-time-out' },
+  { id: 'time-in', label: 'Time In', action: { type: 'zoom', dir: 1 }, control: 'menu-time-in' },
   { id: 'values-out', label: 'Values Out', gap: true },
   { id: 'values-in', label: 'Values In' },
   {

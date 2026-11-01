@@ -124,3 +124,11 @@ test('the hypothetical linear calibration maps 128 on a 20 cm range to about 10.
   assert.equal(calibratedTarget(255, 40), 40);
   assert.equal(calibratedTarget(0, 10), 0);
 });
+
+test('channel labels come from the fixture when it names them, else the trainer defaults', async () => {
+  const { channelLabel } = await import('../src/renderer/logic/simulation.mjs');
+  assert.equal(channelLabel({ names: {} }, 'light-1'), 'Light 1 Digital');
+  assert.equal(channelLabel({}, 'light-2'), 'Light 2 Digital');
+  assert.equal(channelLabel({ names: { 'light-1': 'Digital 0' } }, 'light-1'), 'Digital 0');
+  assert.equal(channelLabel({ names: { 'light-1': 'Digital 0' } }, 'axis-2'), 'Axis 2 DMX 8');
+});

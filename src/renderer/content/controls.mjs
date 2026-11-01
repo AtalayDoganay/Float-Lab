@@ -42,9 +42,94 @@ function menuEntries() {
   })]));
 }
 
+// The menu-bar zoom pair, one entry each so a lesson can point at either.
+const zoomEntry = (id, name, dir) => control(id, name, {
+  short: dir === 'in' ? 'Zoom the Edit View in: fewer seconds fill the window and single frames show.' : 'Zoom the Edit View out: more of the show fits in the window.',
+  purpose: `${name} appears on the menu bar while the Edit View is active (manual pp. 76–77). It is a view control: it changes how much of the timeline fits in the window and nothing in the show.`,
+  when: dir === 'in' ? 'To put an edge on an exact frame, or to read a short event.' : 'To see a whole pattern, or the whole show, at once.',
+  example: dir === 'in' ? 'Time In once: a one-second event spans twice the width. It is still one second.' : 'Time Out until the eight-second show fits: every event keeps its exact start and end.',
+  mistakes: 'Thinking the zoom changed the data: the bars grew or shrank, the values did not.',
+  expected: 'The ruler spacing changes; the times at the window’s left and right edges show what is in view.',
+  effect: 'Changes only the view. The trainer has three zoom steps.',
+  mechanism: { text: 'No effect on outputs.', evidence: 'manual' },
+  evidence: 'manual',
+  related: ['control:time-ruler', 'concept:offline-editing-window'],
+  cites: ['pcmacs-menus'],
+});
+
+// Controls the training shell adds around the recreated windows (trainer only).
+const shellEntry = (id, name, fields) => control(id, name, { mechanism: { text: SIM_NOTE, evidence: 'simplified' }, evidence: 'simplified', ...fields });
+
+const SHELL_CONTROLS = {
+  'film-skip': shellEntry('film-skip', 'Skip>> (orientation film)', {
+    short: 'Skips the rest of the orientation film and opens the training hub.',
+    purpose: 'The film plays once on each launch. Skip>> is on screen from its first frame; pressing it stops the film and its sound and opens the hub at once.',
+    when: 'Whenever you have seen the film before, or just want to start.', example: 'Press Skip>> during the title card: the hub appears immediately.',
+    mistakes: 'Looking for it later: it is always at the upper right.', expected: 'The film stops and the hub appears.', effect: 'Nothing in the training changes; the film can be replayed from the hub.',
+  }),
+  'film-pause': shellEntry('film-pause', 'Pause / Resume (film)', {
+    short: 'Pauses the narration, captions and actions together, and resumes them from the same moment.',
+    purpose: 'One clock drives the film, so a pause stops everything at once and a resume continues from where it stopped.',
+    when: 'To read a caption, or to look at what just happened in the windows.', example: 'Pause while the pointer hovers over Edit ▸ Set Digitals On, then resume.',
+    mistakes: 'Expecting the demonstration to keep editing while paused: it waits.', expected: 'The button reads Resume while paused.', effect: 'Nothing is edited while paused.',
+  }),
+  'sound-settings': shellEntry('sound-settings', 'Sound settings', {
+    short: 'Separate volumes and mutes for the narrator, the music and Rosie’s chirps, plus captions.',
+    purpose: 'The three sound layers are separate, so the narration can stay while the music goes, or the other way round. Captions can always be shown.',
+    when: 'Before a film, or whenever the balance is wrong for your room.', example: 'Mute the music and keep the narrator at full volume.',
+    mistakes: 'Muting the narrator and wondering why the film is silent: captions still show every line.', expected: 'The change takes effect at once and is remembered.', effect: 'Preferences only; progress is untouched.',
+  }),
+  'sound-enable': shellEntry('sound-enable', 'Turn sound on', {
+    short: 'Appears when the browser keeps sound blocked until you click; one click enables it.',
+    purpose: 'Some systems refuse to play sound before the first click. The film still runs with captions; this button lets the sound through.',
+    when: 'When the film is silent and this button is shown.', example: 'Click it once; the music starts and the next line is spoken.',
+    mistakes: 'Waiting for sound that cannot start by itself.', expected: 'The button disappears when sound is on.', effect: 'None on the training.',
+  }),
+  'start-training': shellEntry('start-training', 'Start your training', {
+    short: 'Begins the first lesson. With a save, it first asks whether to continue or restart.',
+    purpose: 'The first of the two main actions on the hub. With no saved training it opens the first short lesson at once; with one, it opens a dialog that offers Continue training, Restart from the beginning, or Cancel.',
+    when: 'The first time, or to start a new run on purpose.', example: 'First launch: Start your training opens “Meet the PC•MACs screen”.',
+    mistakes: 'Expecting it to erase progress: it never does without the restart confirmation.', expected: 'The first lesson, or the dialog.', effect: 'Opens a lesson; a restart is a separate confirmed action.',
+  }),
+  'continue-training': shellEntry('continue-training', 'Continue your training', {
+    short: 'Resumes the saved lesson and step; disabled when there is nothing saved yet.',
+    purpose: 'The second main action. It shows when you last worked and where, then reopens that place. With no saved training it is disabled and says so; after a finished course it opens the review stop.',
+    when: 'Every time you come back.', example: '“Last worked on: October 31, 2026, 14:02 — One second ON, step 2.”',
+    mistakes: 'Hovering the disabled button and waiting: there is nothing to continue yet.', expected: 'The saved step reopens with the windows as you left them.', effect: 'None on the data: it reads the save.',
+  }),
+  'replay-intro': shellEntry('replay-intro', 'Replay introduction', {
+    short: 'Plays the orientation film again, on request only.',
+    purpose: 'The film plays by itself once per launch; this link is the only other way to see it.',
+    when: 'To watch the history again, or to show someone.', example: 'Replay introduction, then Skip>> when you have seen enough.',
+    mistakes: 'Expecting Home to replay it: it never does by itself.', expected: 'The film from its title card.', effect: 'None on progress.',
+  }),
+  'restart-training': shellEntry('restart-training', 'Restart training', {
+    short: 'Resets the active run after Rosie has been tickled out of the way, within five seconds.',
+    purpose: 'Rosie guards this button. Tickling her reveals it for five seconds; a separate click on it within that time saves a recoverable snapshot of the old run and starts a fresh one. If the time passes, she guards it again and nothing is reset. Use simple confirmation offers a plain confirm instead.',
+    when: 'Only when you really want to begin again.', example: 'Tickle Rosie, read the countdown, click Restart training.',
+    mistakes: 'Thinking the tickle itself restarts: it never does.', expected: 'The first lesson opens; the old run is kept as progress.previous-run-….json.', effect: 'Progress only; preferences are kept.',
+  }),
+  'rosie-help': shellEntry('rosie-help', 'Click mascot to get help', {
+    short: 'Opens Rosie’s two choices: a visible demonstration, or a typed question.',
+    purpose: 'During practice the label sits above Rosie. Click her (or press Enter on the label) and she offers to show you how it is done, on the real controls, or to answer a question from the lesson’s own knowledge.',
+    when: 'Whenever you are stuck on the current task.', example: '“Do you want me to show you how this is done?” runs the pointer through the task on an isolated copy of the show; your attempt is kept.',
+    mistakes: 'Expecting her to fix your attempt silently: she shows, she does not inject answers.', expected: 'Two buttons beside her; Escape closes them.', effect: 'Help use is recorded as assisted; nothing else changes.',
+  }),
+  'robot-preview': shellEntry('robot-preview', 'Robot Rosie (simulated preview)', {
+    short: 'A small mechanical robot beside the windows that follows the simulated output of Digital 0.',
+    purpose: 'Robot Rosie is not the guide. She is a separate machine driven only by the show data at the playhead (or the Soft Console in Manual mode): when Digital 0 is ON her petals open; OFF, they close. Which part the channel really drives is a proposed mapping, not confirmed.',
+    when: 'Watch her while the show plays to see what the recorded values would do.', example: 'ON from 1 s to 2 s: the petals open at one second and close at two.',
+    mistakes: 'Expecting her to move when you select or zoom: only playback or Manual mode drives her.', expected: 'Her readout shows ON (1) or OFF (0) and the show time.', effect: 'None: she reads the simulated outputs.',
+    mechanism: { text: 'A proposed mapping for a preview. No real robot, wiring or controller behaviour is claimed.', evidence: 'unverified' }, evidence: 'unverified',
+  }),
+};
+
 export const CONTROLS = Object.freeze({
   // ---- PC•MACs menu bar ------------------------------------------------------
   ...menuEntries(),
+  'menu-time-out': zoomEntry('menu-time-out', 'Time Out (menu bar)', 'out'),
+  'menu-time-in': zoomEntry('menu-time-in', 'Time In (menu bar)', 'in'),
+  ...SHELL_CONTROLS,
   'menu-zoom': control('menu-zoom', 'Time In and Time Out (menu bar)', {
     short: 'Zoom the Edit View in to see single frames, or out to see more of the show.',
     purpose: 'While the Edit View is active, PC•MACs adds Time Out and Time In to the menu bar (manual p. 76–77). They change how much of the show fits in the window; nothing in the show changes.',

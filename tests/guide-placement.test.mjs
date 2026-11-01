@@ -191,3 +191,22 @@ test('she keeps off the other recreated windows when a spot beside the target’
   const without = placeBeside({ viewport: VIEW, target, bubble: BUBBLE, avoid: [panel, own], clear: own });
   assert.ok(visibleBox(without).y < other.y + other.h, 'without it in the list she stands beside the target itself');
 });
+
+test('a side bubble slides up past the target rather than dropping onto the panel’s action rows (the practice screen with the robot column)', () => {
+  // The One second ON practice at 1783×974: she stands left of the Edit View (in the panel); her bubble
+  // must not cover Check / Back / Next below her when it can sit beside her above the digital pane.
+  const view = { w: 1783, h: 974 };
+  const target = { x: 640, y: 462, w: 715, h: 73 };
+  const editView = { x: 476, y: 140, w: 909, h: 460, weight: 2 };
+  const controlWindow = { x: 476, y: 615, w: 620, h: 360, weight: 1 };
+  const panel = { x: 0, y: 88, w: 450, h: 886, weight: 1 };
+  const rows = { x: 24, y: 610, w: 400, h: 160, weight: 4 };
+  const robot = { x: 1408, y: 96, w: 340, h: 585, weight: 4 };
+  const bubble = { w: 370, h: 232 };
+  const r = placeBeside({ viewport: view, target, bubble, avoid: [panel, editView, controlWindow, rows, robot], clear: editView });
+  const b = { x: r.bubble.x, y: r.bubble.y, w: bubble.w, h: bubble.h };
+  assert.equal(intersects(b, rows), false, `off the action rows: ${JSON.stringify(r.bubble)}`);
+  assert.equal(intersects(b, target), false, 'off the target');
+  assert.equal(intersects(b, visibleBox(r)), false, 'off her');
+  assert.ok(inside(b, view), JSON.stringify(b));
+});

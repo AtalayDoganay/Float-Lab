@@ -5,11 +5,12 @@
 import { BASIC_LESSONS } from './lessons/basic.mjs';
 import { INTERMEDIATE_LESSONS } from './lessons/intermediate.mjs';
 import { COMPREHENSIVE_LESSONS } from './lessons/comprehensive.mjs';
+import { SEGMENT_LESSONS } from './lessons/segment-digital.mjs';
 
 // Workspace parts a step can reveal. The workspace starts empty and grows as
-// the lesson introduces each part.
+// the lesson introduces each part. `robot` is Robot Rosie's preview beside the windows.
 export const WORKSPACE_PARTS = Object.freeze([
-  'title', 'ruler', 'analog', 'digital', 'transport', 'command', 'measure', 'network', 'calibration', 'terminal', 'term-toolbar',
+  'title', 'ruler', 'analog', 'digital', 'transport', 'command', 'measure', 'network', 'calibration', 'terminal', 'term-toolbar', 'robot',
 ]);
 
 const group = (id, title, summary) => ({ id, title, summary });
@@ -22,12 +23,14 @@ export const GROUPS = Object.freeze({
   hydraulics: group('hydraulics', 'Hydraulics', 'How a number becomes a movement: actuators, endpoints, feedback.'),
   diagnosis: group('diagnosis', 'Diagnosis', 'Reading a mismatch without guessing the cause.'),
   assignments: group('assignments', 'Assignments', 'Whole tasks, checked step by step in the PC•MACs windows.'),
+  // The course's first segment (brief, October 31, 2026). Not part of any legacy level.
+  start: group('start', 'Your first segment', 'The screen, digital versus analog, and one second of ON.'),
 });
 
 const GROUP_ORDER = ['interface', 'graphs', 'terminology', 'functions', 'hydraulics', 'diagnosis', 'assignments'];
 
 export const LESSONS_BY_ID = Object.freeze(Object.fromEntries(
-  [...BASIC_LESSONS, ...INTERMEDIATE_LESSONS, ...COMPREHENSIVE_LESSONS].map((l) => [l.id, Object.freeze(l)]),
+  [...BASIC_LESSONS, ...INTERMEDIATE_LESSONS, ...COMPREHENSIVE_LESSONS, ...SEGMENT_LESSONS].map((l) => [l.id, Object.freeze(l)]),
 ));
 
 function sortByGroup(lessons) {

@@ -26,14 +26,21 @@
 //      written before the welcome existed belongs to someone who has already
 //      used the trainer; a fresh document starts at false. No backup or
 //      migration note is needed for this addition.
+//   4  one course (October 31, 2026): `location.level` may be 'course' and
+//      `location.view` 'course'; a `training` record holds the last real
+//      training activity, the checkpoint, which lesson films were watched or
+//      skipped, which steps were attempted or assisted, whether the course is
+//      complete, and the restart history. A version-3 document keeps every
+//      field; its training record is derived (activity = savedAt when any
+//      step was finished, checkpoint = the saved lesson and step).
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 export const FPS = 30;
 export const FRAME_COUNT = 240;
 export const DIGITAL_IDS = Object.freeze(['light-1', 'light-2']);
 export const APP_ID = 'roseflow-pc-mac-training';
-export const LEVELS = Object.freeze(['basic', 'intermediate', 'hate']);
-export const VIEWS = Object.freeze(['home', 'level', 'lesson', 'explore', 'progress']);
+export const LEVELS = Object.freeze(['basic', 'intermediate', 'hate', 'course']);
+export const VIEWS = Object.freeze(['home', 'level', 'lesson', 'explore', 'progress', 'course']);
 
 export const DEFAULT_LOCATION = Object.freeze({
   view: 'home',
@@ -62,7 +69,20 @@ export function cloneSettings(settings) {
   };
 }
 
-export function createEmptyProgress() {
+export function emptyTraining({ restarts } = {}) {
+  return {
+    lastActivityAt: null,
+    checkpoint: null,
+    watched: [],
+    skipped: [],
+    attempted: [],
+    assisted: [],
+    completed: false,
+    restarts: restarts ? { count: restarts.count, lastAt: restarts.lastAt } : { count: 0, lastAt: null },
+  };
+}
+
+export function createEmptyProgress({ restarts } = {}) {
   return {
     schemaVersion: SCHEMA_VERSION,
     app: APP_ID,
@@ -74,6 +94,7 @@ export function createEmptyProgress() {
     settings: cloneSettings(DEFAULT_SETTINGS),
     migrated: null,
     guide: { welcomed: false },
+    training: emptyTraining({ restarts }),
   };
 }
 
@@ -224,6 +245,29 @@ function readMigrated(input) {
   };
 }
 
+const isoOrNull = (v) => (typeof v === 'string' ? v : null);
+
+// Absent fields default; a checkpoint must name a lesson and an integer step.
+function readTraining(input) {
+  const t = isPlainObject(input) ? input : {};
+  let checkpoint = null;
+  if (t.checkpoint !== undefined && t.checkpoint !== null) {
+    if (!isPlainObject(t.checkpoint) || typeof t.checkpoint.lessonId !== 'string' || !isNonNegativeInt(t.checkpoint.stepIndex)) return null;
+    checkpoint = { lessonId: t.checkpoint.lessonId, stepIndex: t.checkpoint.stepIndex };
+  }
+  const r = isPlainObject(t.restarts) ? t.restarts : {};
+  return {
+    lastActivityAt: isoOrNull(t.lastActivityAt),
+    checkpoint,
+    watched: stringList(t.watched),
+    skipped: stringList(t.skipped),
+    attempted: stringList(t.attempted),
+    assisted: stringList(t.assisted),
+    completed: t.completed === true,
+    restarts: { count: isNonNegativeInt(r.count) ? r.count : 0, lastAt: isoOrNull(r.lastAt) },
+  };
+}
+
 // Absent means welcomed (an older file); present must carry a boolean.
 function readGuide(input) {
   if (input === undefined) return { welcomed: true };
@@ -249,6 +293,9 @@ export function validateProgress(input) {
   const guide = readGuide(input.guide);
   if (!guide) return { ok: false, error: 'invalid-guide' };
 
+  const training = readTraining(input.training);
+  if (!training) return { ok: false, error: 'invalid-training' };
+
   const learning = isPlainObject(input.learning) ? input.learning : {};
 
   return {
@@ -267,6 +314,7 @@ export function validateProgress(input) {
       settings,
       migrated: readMigrated(input.migrated),
       guide,
+      training,
     },
   };
 }
@@ -281,6 +329,7 @@ export function migrateProgress(input) {
   if (!isPlainObject(input)) return { ok: false, error: 'not-an-object' };
   if (input.app !== APP_ID) return { ok: false, error: 'wrong-app' };
   if (input.schemaVersion === SCHEMA_VERSION) return { ok: true, from: SCHEMA_VERSION, value: input };
+  if (input.schemaVersion === 3) return migrateFrom3(input);
   if (input.schemaVersion !== 1 && input.schemaVersion !== 2) return { ok: false, error: 'unsupported-schema' };
 
   const old = readBlockSettings(input.settings);
@@ -311,6 +360,7 @@ export function migrateProgress(input) {
         // blocks converted), so it replaces any note left by a v1 -> v2 migration.
         migrated: { fromSchemaVersion: 2, originalSavedAt: savedAt, originalView: location.view },
         guide: { welcomed: true },
+        training: emptyTraining(),
       },
     };
   }
@@ -333,6 +383,45 @@ export function migrateProgress(input) {
         originalView: typeof oldLocation.view === 'string' ? oldLocation.view : null,
       },
       guide: { welcomed: true },
+      training: emptyTraining(),
+    },
+  };
+}
+
+// Version 3 had every field the current schema has except `training`, which
+// is derived: activity is the file's savedAt when any step was finished, and
+// the checkpoint is the saved lesson and step.
+function migrateFrom3(input) {
+  const location = readLocation(input.location);
+  if (!location) return { ok: false, error: 'invalid-location' };
+  const settings = readSettings(input.settings);
+  if (!settings) return { ok: false, error: 'invalid-settings' };
+  const guide = readGuide(input.guide);
+  if (!guide) return { ok: false, error: 'invalid-guide' };
+  const savedAt = typeof input.savedAt === 'string' ? input.savedAt : null;
+  const learning = isPlainObject(input.learning) ? input.learning : {};
+  const completedSteps = stringList(learning.completedSteps);
+  const training = emptyTraining();
+  training.lastActivityAt = completedSteps.length ? savedAt : null;
+  training.checkpoint = location.lessonId ? { lessonId: location.lessonId, stepIndex: location.stepIndex } : null;
+  return {
+    ok: true,
+    from: 3,
+    value: {
+      schemaVersion: SCHEMA_VERSION,
+      app: APP_ID,
+      savedAt,
+      location,
+      learning: {
+        completedSteps,
+        completedLessons: stringList(learning.completedLessons),
+        missedLessons: stringList(learning.missedLessons),
+      },
+      ...readLegacyRecords(input),
+      settings,
+      migrated: { fromSchemaVersion: 3, originalSavedAt: savedAt, originalView: location.view },
+      guide,
+      training,
     },
   };
 }

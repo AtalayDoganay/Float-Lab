@@ -5,6 +5,7 @@ import { LEVELS, LESSONS_BY_ID, lessonsForLevel } from '../content/levels.mjs';
 import { LESSONS as CLASSIC_LESSONS } from '../content/curriculum.mjs';
 import { EXERCISES } from '../content/exercises.mjs';
 import { MANUAL_CITATIONS } from '../content/references.mjs';
+import { COURSE_LESSONS } from '../content/course.mjs';
 import { lessonStatus } from './level.mjs';
 
 export function mountProgress(container, { dispatch }) {
@@ -21,16 +22,23 @@ export function mountProgress(container, { dispatch }) {
     const classicTotalQuestions = CLASSIC_LESSONS.reduce((n, l) => n + l.questions.length, 0);
     const exerciseTotalSteps = EXERCISES.reduce((n, e) => n + e.steps.length, 0);
 
+    const courseDone = COURSE_LESSONS.filter((l) => lessonStatus(l, state.learning).finished).length;
+    const t = state.training;
     replace(container, el('div', { class: 'progress-view' },
       el('div', { class: 'btn-row' },
-        el('button', { type: 'button', class: 'btn btn-small', 'data-control': 'nav-home', 'data-fid': 'home', text: 'Home', onclick: () => dispatch({ type: 'go-home' }) }),
+        el('button', { type: 'button', class: 'btn btn-small', 'data-control': 'nav-home', 'data-fid': 'home', text: 'Hub', onclick: () => dispatch({ type: 'go-home' }) }),
         state.lesson.id ? el('button', { type: 'button', class: 'btn btn-small', 'data-fid': 'back-lesson', text: 'Back to the lesson', onclick: () => dispatch({ type: 'start-lesson', id: state.lesson.id, stepIndex: state.lesson.stepIndex }) }) : null),
       el('h1', { text: 'Progress' }),
-      ...LEVELS.map((level) => {
+      el('div', { class: 'stat' }, el('span', { text: 'Rose Float training (first segment)' }), el('strong', { text: `${courseDone} of ${COURSE_LESSONS.length} lessons finished` })),
+      el('div', { class: 'stat' }, el('span', { text: 'Last training activity' }), el('strong', { text: t.lastActivityAt ? new Date(t.lastActivityAt).toLocaleString() : 'none yet' })),
+      el('div', { class: 'stat' }, el('span', { text: 'Films watched / help used' }), el('strong', { text: `${t.watched.length} watched, ${t.skipped.length} skipped, ${t.assisted.length} assisted` })),
+      el('h2', { text: 'Earlier lessons (archive)' }),
+      el('p', { class: 'muted', text: 'The three levels of the previous version, kept so finished work stays finished. They are not the current course.' }),
+      el('div', { class: 'btn-row' }, ...LEVELS.map((level) => {
         const lessons = lessonsForLevel(level.id);
         const done = lessons.filter((l) => lessonStatus(l, state.learning).finished).length;
-        return el('div', { class: 'stat' }, el('span', { text: level.name }), el('strong', { text: `${done} of ${lessons.length} lessons finished` }));
-      }),
+        return el('button', { type: 'button', class: 'btn btn-small', 'data-control': 'level-choice', 'data-fid': `level-${level.id}`, text: `${level.name}: ${done} of ${lessons.length} finished`, onclick: () => dispatch({ type: 'choose-level', level: level.id }) });
+      })),
       el('div', { class: 'stat' }, el('span', { text: 'Steps finished across all lessons' }), el('strong', { text: `${stepsDone} of ${stepsTotal}` })),
       el('div', { class: 'stat' }, el('span', { text: 'Lessons with a wrong try to review' }), el('strong', { text: review.length ? review.join('; ') : 'none yet' })),
       el('div', { class: 'stat' }, el('span', { text: 'Last saved' }), el('strong', { text: p.savedAt ? new Date(p.savedAt).toLocaleString() : (p.error ? 'save failed' : 'not yet') })),
@@ -45,7 +53,7 @@ export function mountProgress(container, { dispatch }) {
       el('h2', { text: 'Start over' }),
       el('div', { class: 'btn-row' },
         el('button', { type: 'button', class: 'btn', 'data-control': 'restart', 'data-fid': 'restart', text: 'Start over', onclick: () => dispatch({ type: 'restart-request' }) }), helpButton('restart')),
-      el('p', { class: 'muted', text: 'Start over asks for confirmation and clears every lesson, step, and classic record. To redo a single lesson, use “Restart this lesson” inside it.' }),
+      el('p', { class: 'muted', text: 'Start over opens Rosie’s guarded confirmation; a confirmed restart keeps the old run as a recoverable snapshot beside the progress file. To redo a single lesson, use “Restart this lesson” inside it.' }),
 
       el('h2', { text: 'Sources (open outside the app)' }),
       el('p', { class: 'muted', text: 'Installed lessons never need these downloads. Links open in your system browser, never inside this app.' }),

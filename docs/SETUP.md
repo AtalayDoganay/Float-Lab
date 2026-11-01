@@ -14,9 +14,11 @@
 | `npm ci` | Installs the pinned dependencies from `package-lock.json`. |
 | `npm start` | Runs the app in development (Electron Forge `start`). |
 | `npm test` | Runs the unit and behavioral tests with `node --test`. |
-| `npm run smoke` | Runs the hidden-window smoke harness against the development app: fresh run through Rosie's welcome, the home screen, a level map, two lessons driven through the recreated Edit View and Edit menu (including the look / watch / try beats and Back during a demonstration), the handbook, and help; resume after a real relaunch; malformed progress file; simulated save failure; migration of a version-1 and of a version-2 progress file; the practice steps that use the recreated windows. Never shows a window or takes focus; pointer events are synthetic and go only to the hidden page. |
+| `npm run smoke` | Runs the hidden-window smoke harness against the development app: fresh run through Rosie's welcome, the home screen, a level map, two lessons driven through the recreated Edit View and Edit menu (including the look / watch / try beats and Back during a demonstration), the handbook, and help; resume after a real relaunch (with the guarded restart); malformed progress file; simulated save failure; simulated read failure (a locked file: nothing is written over it); migration of a version-1 and of a version-2 progress file; the practice steps that use the recreated windows; the course review flow. Sound is exercised through silent stand-ins for the speech engine and the audio context, so narration is observable without a speaker. Never shows a window or takes focus; pointer events are synthetic and go only to the hidden page. |
 | `node scripts/smoke.mjs --exe "<path to RoseflowPCMacTraining.exe>"` | Runs the same scenarios against a packaged build. |
-| `node scripts/smoke.mjs --shots <dir>` | Captures review screenshots of the hidden window into `<dir>`. |
+| `node scripts/smoke.mjs --shots <dir>` | Runs the review-flow scenarios (`course`, `sheet`) and captures the review screenshots and the expression contact sheets into `<dir>`. |
+| `node scripts/smoke.mjs --only course,resume` | Runs a subset of scenarios. The `course` scenario is the review flow on a fresh profile: the film, the hub, the orientation demonstrations, the "One second ON" film on the real controls, the practice with its corrections and the pass, Rosie's help, Robot Rosie. |
+| `npm run record` | Records the two review sequences (watch → try → help → retry; skip → continue → start → tickle → timeout → tickle → confirmed restart) as frame folders under `docs/review/<date>/` and stitches them into MP4s with `ffmpeg` (must be on PATH). |
 | `npm run package` | Packages the app into `out/Roseflow PC Mac Training-win32-x64/`. |
 | `npm run make` | Packages and builds distributables under `out/make/`. |
 
@@ -41,9 +43,25 @@ with Windows' built-in "Send to > Compressed (zipped) folder" or
 
 `app.getPath('userData')/progress.json`, which on Windows is
 `%APPDATA%\Roseflow PC Mac Training\progress.json`. The Progress view shows the
-exact path. The file is a versioned JSON document (`schemaVersion: 3`) written
+exact path. The file is a versioned JSON document (`schemaVersion: 4`) written
 atomically (temp file + rename). Unreadable or incompatible files are renamed to
 `progress.invalid-<timestamp>.json` beside it, never deleted.
+
+Since October 31, 2026 (schema 4) the document also carries `training`: the
+last real training activity (a passed check, an answer, a step advanced, a
+film watched; never the film, a hover, or a tickle), the checkpoint, the films
+watched or skipped, the steps attempted or assisted, whether the course is
+complete, and the restart history. A schema-3 file is backed up as
+`progress.v3-backup.json` and carried forward with every field; its training
+record is derived (activity = its `savedAt` when any step was finished; the
+checkpoint = its saved lesson and step, which Continue reopens from the archive
+when it is one of the earlier lessons). Two more files sit beside it:
+
+- `preferences.json`: the sound layers' volumes and mutes, captions, the
+  restart-confirmation style, and an optional reduced-motion override. Kept
+  across a restart; an unreadable file is replaced by the defaults.
+- `progress.previous-run-<stamp>.json`: the run a confirmed restart replaced,
+  byte for byte; the three newest are kept.
 
 Since October 23, 2026 the document also carries `guide: { welcomed: boolean }`,
 whether Rosie's welcome has been seen. The version stays 3 because nothing else

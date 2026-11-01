@@ -31,27 +31,32 @@ const count = (calls, ...names) => calls.filter((c) => names.includes(c.name)).l
 const EXPRESSIONS = ['wave', 'point', 'happy', 'cheer', 'oops', 'idle'];
 const MOODS = ['none', 'notice', 'hover', 'boop', 'giggle', 'dizzy', 'pet', 'sleep', 'startle'];
 
-test('each expression maps to one face', () => {
+test('the legacy names each map to one face of the palette', () => {
   assert.equal(FACE_SIZE, 512);
-  assert.deepEqual(faceParams('wave'), { eye: 'open', brow: 'up', mouth: 'grin', blush: 0.6 });
-  assert.deepEqual(faceParams('point'), { eye: 'open', brow: 'determined', mouth: 'smile', blush: 0.4 });
-  assert.deepEqual(faceParams('happy'), { eye: 'happy', brow: 'none', mouth: 'cat', blush: 0.6 });
-  assert.deepEqual(faceParams('cheer'), { eye: 'closed', brow: 'up', mouth: 'open', blush: 1 });
-  assert.deepEqual(faceParams('oops'), { eye: 'wide', brow: 'worried', mouth: 'wobble', blush: 0.3 });
-  assert.deepEqual(faceParams('idle'), { eye: 'open', brow: 'none', mouth: 'smile', blush: 0.4 });
-  assert.deepEqual(faceParams('whatever'), faceParams('idle'));
+  assert.deepEqual(faceParams('wave'), faceParams('joy'));
+  assert.deepEqual(faceParams('point'), faceParams('alertness'));
+  assert.deepEqual(faceParams('happy'), faceParams('satisfaction'));
+  assert.deepEqual(faceParams('cheer'), faceParams('laughter'));
+  assert.deepEqual(faceParams('oops'), faceParams('anxiety'));
+  assert.deepEqual(faceParams('idle'), faceParams('neutral'));
+  assert.deepEqual(faceParams('whatever'), faceParams('neutral'));
+  assert.equal(faceParams('cheer').eyeShape, 'closed');
+  assert.equal(faceParams('oops').mouth, 'wobble');
 });
 
 test('a mood lays its own eyes and mouth over the expression', () => {
   assert.deepEqual(faceParams('point', 'none'), faceParams('point'));
-  assert.deepEqual(faceParams('point', 'hover'), { eye: 'sparkle', brow: 'up', mouth: 'grin', blush: 0.8 });
-  assert.equal(faceParams('point', 'boop').eye, 'squeeze');
-  assert.equal(faceParams('point', 'dizzy').eye, 'dizzy');
+  const hover = faceParams('point', 'hover');
+  assert.equal(hover.eyeShape, 'sparkle');
+  assert.equal(hover.mouth, 'grin');
+  assert.equal(hover.blush, 0.8);
+  assert.equal(faceParams('point', 'boop').eyeShape, 'squeeze');
+  assert.equal(faceParams('point', 'dizzy').eyeShape, 'dizzy');
   assert.equal(faceParams('point', 'pet').mouth, 'cat');
-  assert.equal(faceParams('point', 'sleep').eye, 'sleep');
-  assert.equal(faceParams('point', 'startle').eye, 'wide');
+  assert.equal(faceParams('point', 'sleep').eyeShape, 'sleep');
+  assert.equal(faceParams('point', 'startle').eyeShape, 'wide');
   const notice = faceParams('point', 'notice');
-  assert.equal(notice.eye, 'open', 'noticing keeps the expression’s eyes');
+  assert.equal(notice.eyeShape, 'round', 'noticing keeps the expression’s eyes');
   assert.ok(notice.blush > faceParams('point').blush, 'with a touch more blush');
 });
 

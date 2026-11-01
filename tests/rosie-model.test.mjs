@@ -123,6 +123,15 @@ test('idle actions: a stretch and a wiggle move her, never under reduced motion'
   assert.deepEqual(glance.root, rest.root, 'a glance is the eyes alone');
 });
 
+test('tickled: she wriggles with her arms hugged in, and holds still under reduced motion', () => {
+  const t = poseFor({ expression: 'tickled', t: 0.2 });
+  assert.notEqual(t.root.roll, 0, 'a wriggle');
+  assert.ok(t.armL.z > -0.5 && t.armR.z < 0.5 && t.armL.x < -0.5 && t.armR.x < -0.5, `arms in: ${JSON.stringify(t)}`);
+  const still = poseFor({ expression: 'tickled', t: 0.2, reduced: true });
+  assert.equal(still.root.roll, 0);
+  assert.equal(still.root.y, 0);
+});
+
 test('applyPose writes the pose into the parts', () => {
   const { parts } = build();
   applyPose(parts, poseFor({ expression: 'cheer', t: 0.6 }));

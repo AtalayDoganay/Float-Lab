@@ -6,7 +6,7 @@
 import { el, helpButton, evidenceChip } from './dom.mjs';
 import {
   DIGITAL_CHANNELS, axisToDmx, percentOf, formatPercent, calibratedTarget, classifyLaptopIp,
-  CONTROLLER_IP, GATEWAY, NETMASK,
+  CONTROLLER_IP, GATEWAY, NETMASK, channelLabel,
 } from '../logic/simulation.mjs';
 import { outputSource } from '../logic/outputs.mjs';
 
@@ -79,7 +79,7 @@ export function mountFloatPanel(container, { dispatch }) {
       const { lamp, text } = refs.lamps.get(c.id);
       const on = sim.outputs.lights[c.id];
       lamp.classList.toggle('on', on);
-      text.textContent = `${c.name}: ${on ? 'lit' : 'dark'}`;
+      text.textContent = `${sim.names && sim.names[c.id] ? sim.names[c.id] : c.name}: ${on ? 'lit' : 'dark'}`;
     }
     refs.source.textContent = SOURCE_TEXT[source];
 

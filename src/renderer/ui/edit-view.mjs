@@ -16,7 +16,7 @@ import { el, replace } from './dom.mjs';
 import { win, svg, clockFace } from './win.mjs';
 import {
   FRAME_COUNT, FPS, SHOW_SECONDS, ANALOG_CHANNELS, DIGITAL_CHANNELS,
-  formatTime, formatCursor, parseTime, percentOf, channelName,
+  formatTime, formatCursor, parseTime, percentOf, channelLabel,
 } from '../logic/simulation.mjs';
 
 const ANALOG_H = 200;
@@ -76,7 +76,7 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
   refs.dPlot = el('div', { class: 'ev-plot ev-digital', 'data-part': 'digital', 'data-control': 'digital-pane', tabindex: '0', style: `height:${DIGITAL_H}px`, 'aria-label': 'Digital pane, on or off' });
   refs.dPlot.append(refs.dSvg);
   refs.digitalNameBtns = new Map(DIGITAL_CHANNELS.map((c, i) => {
-    const b = el('button', { type: 'button', class: 'ev-name', 'data-control': 'channel-select', 'data-channel': c.id, style: `top:${ROW_TOP + i * ROW_H - 6}px`, text: `${c.name} Digital`,
+    const b = el('button', { type: 'button', class: 'ev-name', 'data-control': 'channel-select', 'data-channel': c.id, style: `top:${ROW_TOP + i * ROW_H - 6}px`, text: channelLabel(null, c.id),
       onclick: (e) => dispatch({ type: 'select-name', id: c.id, toggle: e.ctrlKey || e.shiftKey }) });
     return [c.id, b];
   }));
@@ -245,7 +245,7 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
       text += `   ${pct.toFixed(1)}%`;
     }
     refs.cursor.textContent = text;
-    refs.hoverName.textContent = id ? channelName(id) : '';
+    refs.hoverName.textContent = id ? channelLabel(last.sim, id) : '';
   }
 
   attachPointer(refs.aPlot, analogHit);
@@ -355,6 +355,7 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
     if (show('digital')) renderDigital(sim);
 
     const sel = sim.selection;
+    for (const [id, b] of refs.digitalNameBtns) { const name = channelLabel(sim, id); if (b.textContent !== name) b.textContent = name; }
     for (const [id, b] of [...refs.analogNameBtns, ...refs.digitalNameBtns]) {
       const on = sel.channels.includes(id);
       b.classList.toggle('selected', on);

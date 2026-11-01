@@ -76,3 +76,11 @@ test('the bubble carries one beat’s text at a time', () => {
   assert.deepEqual(bubbleText({ step: questionStep, beat: 'look', done: false, feedback: null, demo: idle }).lines, ['Two panes, two kinds of channel.', 'Which pane shows ON/OFF channels?']);
   assert.deepEqual(bubbleText({ step: questionStep, beat: 'look', done: true, feedback: { ok: true, message: 'That’s right. Digitals are below.' }, demo: idle }).lines, ['That’s right. Digitals are below.']);
 });
+
+test('a practice step whose film was already watched or skipped opens in its try beat, not on a second Watch', () => {
+  const practiceFilm = { ...practiceDemo, id: 'try', demo: null, film: { id: 'f', beats: [] } };
+  assert.equal(initialBeat(practiceFilm, false, { filmSeen: true }), 'try');
+  assert.equal(initialBeat(practiceFilm, false, { filmSeen: false }), 'look');
+  assert.equal(initialBeat(practiceFilm, false), 'look');
+  assert.equal(initialBeat({ ...explainDemo, film: { id: 'f', beats: [] } }, false, { filmSeen: true }), 'look', 'an explain step is read first whatever was watched');
+});

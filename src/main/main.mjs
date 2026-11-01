@@ -7,8 +7,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import started from 'electron-squirrel-startup';
 import { createProgressStore } from './progress-store.mjs';
+import { createPrefsStore } from './prefs-store.mjs';
 import { isApprovedLink } from './links.mjs';
 import { validateProgress } from '../shared/progress-schema.mjs';
+import { validatePrefs } from '../shared/prefs-schema.mjs';
 
 // Squirrel.Windows runs the app briefly during install/uninstall; exit quietly.
 if (started) app.quit();
@@ -33,7 +35,7 @@ export const CSP = [
   "frame-src 'none'",
 ].join('; ');
 
-const store = { current: null };
+const store = { current: null, prefs: null };
 
 function registerIpc() {
   ipcMain.handle('progress:load', () => store.current.load());
@@ -43,6 +45,12 @@ function registerIpc() {
     return store.current.save(validated.value);
   });
   ipcMain.handle('progress:reset', () => store.current.reset());
+  ipcMain.handle('prefs:load', () => store.prefs.load());
+  ipcMain.handle('prefs:save', (_event, prefs) => {
+    const validated = validatePrefs(prefs);
+    if (!validated.ok) return { ok: false, error: 'invalid-prefs' };
+    return store.prefs.save(validated.value);
+  });
   ipcMain.handle('links:open', async (_event, url) => {
     if (!isApprovedLink(url)) return { ok: false, error: 'link-not-approved' };
     await shell.openExternal(url);
@@ -69,6 +77,8 @@ function createWindow() {
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
+      // The orientation film plays its synthesized music and local narration on launch.
+      autoplayPolicy: 'no-user-gesture-required',
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -97,6 +107,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   store.current = createProgressStore({ dir: app.getPath('userData') });
+  store.prefs = createPrefsStore({ dir: app.getPath('userData') });
   registerIpc();
 
   const ses = session.defaultSession;

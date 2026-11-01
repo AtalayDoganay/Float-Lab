@@ -76,7 +76,7 @@ test('a version-1 file is migrated on load, backed up byte for byte, and left in
 
   const loaded = await store.load();
   assert.equal(loaded.ok, true);
-  assert.equal(loaded.value.schemaVersion, 3);
+  assert.equal(loaded.value.schemaVersion, 4);
   assert.deepEqual(loaded.value.course.answered, ['l01q1']);
   assert.deepEqual(loaded.value.guided.completedSteps, ['schedule-light:sl-channel']);
   assert.equal(loaded.value.settings.axis, 3);
@@ -104,14 +104,14 @@ test('a version-2 file is migrated on load and backed up as progress.v2-backup.j
   const text = JSON.stringify(v2, null, 2);
   await fs.writeFile(store.filePath, text, 'utf8');
   const loaded = await store.load();
-  assert.equal(loaded.value.schemaVersion, 3);
+  assert.equal(loaded.value.schemaVersion, 4);
   assert.deepEqual(loaded.value.learning.completedLessons, ['b-system']);
   assert.deepEqual(loaded.value.location, v2.location);
   assert.deepEqual(loaded.migrated, { fromSchemaVersion: 2, backupPath: path.join(dir, 'progress.v2-backup.json') });
   assert.equal(await fs.readFile(loaded.migrated.backupPath, 'utf8'), text);
 });
 
-test('after the app saves once, the file is version 3 and the backup still exists', async () => {
+test('after the app saves once, the file is version 4 and the backup still exists', async () => {
   const dir = await tempDir();
   const store = createProgressStore({ dir });
   await fs.writeFile(store.filePath, V1_TEXT, 'utf8');
@@ -119,8 +119,8 @@ test('after the app saves once, the file is version 3 and the backup still exist
   const saved = await store.save(loaded.value);
   assert.equal(saved.ok, true);
   const again = await store.load();
-  assert.equal(again.value.schemaVersion, 3);
-  assert.equal(again.migrated, undefined, 'a version-3 file is not migrated again');
+  assert.equal(again.value.schemaVersion, 4);
+  assert.equal(again.migrated, undefined, 'a version-4 file is not migrated again');
   await fs.access(path.join(dir, 'progress.v1-backup.json'));
 });
 
@@ -158,4 +158,27 @@ test('reset removes the saved file so the next load starts fresh', async () => {
   assert.deepEqual(loaded, { ok: true, value: null });
   const resetAgain = await store.reset();
   assert.equal(resetAgain.ok, true, 'resetting with no file is still a success');
+  assert.equal(resetAgain.snapshotPath, null, 'nothing to snapshot when there is no file');
+});
+
+test('reset keeps a recoverable snapshot of the previous run and prunes to the three newest', async () => {
+  const dir = await tempDir();
+  let t = 0;
+  const store = createProgressStore({ dir, now: () => new Date(Date.UTC(2026, 9, 31, 12, 0, t++)) });
+  const texts = [];
+  for (let i = 0; i < 4; i += 1) {
+    const doc = createEmptyProgress();
+    doc.learning.completedLessons = [`lesson-${i}`];
+    await store.save(doc);
+    texts.push(await fs.readFile(store.filePath, 'utf8'));
+    const reset = await store.reset();
+    assert.equal(reset.ok, true);
+    assert.match(path.basename(reset.snapshotPath), /^progress\.previous-run-.*\.json$/);
+    assert.equal(await fs.readFile(reset.snapshotPath, 'utf8'), texts[i], 'the snapshot is the former file, byte for byte');
+  }
+  const snapshots = (await fs.readdir(dir)).filter((f) => f.startsWith('progress.previous-run-')).sort();
+  assert.equal(snapshots.length, 3, 'only the three newest snapshots are kept');
+  const kept = await Promise.all(snapshots.map((f) => fs.readFile(path.join(dir, f), 'utf8')));
+  assert.ok(!kept.includes(texts[0]), 'the oldest snapshot was pruned');
+  assert.ok(kept.includes(texts[3]), 'the newest snapshot survives');
 });

@@ -36,16 +36,30 @@ security model, and what has and has not been verified on Windows.
 
 ## What you will see
 
-- **Rosie's welcome** (first launch only): Rosie, the trainer's guide, a
-  chibi toon rose in 3D adapted from the Cal Poly Rose Float logo (see
-  `docs/GUIDE_DESIGN.md`), appears over a dimmed Home and talks through three
-  short beats in her speech bubble; on the last one she flies to the Start
-  button and points at it. Skip or Esc closes it; "Meet Rosie again" on Home
-  replays it.
-- **Home**: one action card (first time: Start with Basic; returning: Continue,
-  beside Start over) with Rosie floating beside it, saying where you were.
-  Under it, the three learning levels, named Basic, intermediate, and I hate
-  my life, as three rows.
+- **The orientation film** (every launch, about a minute): what Rose Float is,
+  who builds it (Cal Poly Pomona with Cal Poly San Luis Obispo), five dated
+  archive photos with their awards and credits, and what the app teaches. The
+  narrator is the system's local speech voice, the music and Rosie's chirps
+  are synthesized, captions are always on offer. **Skip>>** at the upper right
+  opens the hub at once; Home never replays the film, "Replay introduction"
+  does. See `docs/FIRST_SEGMENT.md`.
+- **The hub**: **Start your training** on the left and **Continue your
+  training** on the right. Continue is disabled with "No saved training yet."
+  until a lesson has been opened or real training activity exists; afterwards
+  it names the lesson and step it reopens and, once there has been real
+  activity, the local last-active date (no date is invented for a lesson that
+  was merely opened). Start with a save asks
+  first: Continue training, Restart from the beginning, or Cancel. Rosie
+  stands in her own place beside the actions.
+- **Rosie guards Restart**: a confirmed restart needs a tickle (click her, or
+  Enter on her), a five-second countdown, and a separate click on Restart
+  training; a timeout re-guards; "Use simple confirmation" is the plain
+  alternative. The old run is kept beside the progress file as a snapshot.
+- **One course**: the first digital segment, three lessons (the PC•MACs
+  screen menu by menu, digital versus analog, and "One second ON") and a
+  placeholder for the steps still to be specified. The three earlier levels
+  (Basic, intermediate, I hate my life) are kept as an archive under Progress
+  so finished work stays finished; they are not the current course.
 - **Rosie, everywhere**: she floats over the whole window, flies to the control
   each step is about, points at it, and talks beside it; she bobs, blinks,
   follows the pointer with her eyes, cheers a pass with a hop and sparkles,
@@ -57,20 +71,19 @@ security model, and what has and has not been verified on Windows.
   click, even a click on her; in a crowded or very small window she may
   stand over other parts of the screen. Without WebGL she falls back to flat
   sprites.
-- **A level's lesson map**: lessons grouped by what they teach (the interface,
-  graphs, terminology, functions, hydraulics, diagnosis, assignments), with a
-  Begin here card pointing at the first unfinished lesson. Finished lessons show
-  a check.
-  - Basic (13 lessons) covers the practical essentials: the screen, the graphs,
-    the simple terms, what each control and photographed terminal key does, how a
-    number becomes a hydraulic movement, and two complete assignments.
-  - intermediate (9 lessons) goes deeper: frames and show time, the measurement
-    model against the real loop, the five identifiers, the GilderTerm toolbar,
-    network settings, endpoints and reversal, the feedback menu, two more
-    assignments.
-  - I hate my life (27 lessons) includes every Basic and intermediate lesson plus
-    every menu line of the photographed configuration menus, the gaps the
-    references leave open, a diagnosis lesson, and a round-trip assignment.
+- **"One second ON"**: a narrated film in which Rosie, with the demonstration
+  cursor, selects Digital 0 from 1 s to 2 s on the real Edit View, turns it on
+  with Edit ▸ Set Digitals On (Ctrl+1), stretches it to three seconds by
+  mistake, repairs the data with Set Digitals Off, and plays it back while
+  **Robot Rosie**, a separate mechanical preview beside the windows, follows
+  the simulated output (petals open while ON: a proposed mapping, not a
+  confirmed mechanism). Then the practice: the same task, checked exactly
+  (frames 30–59, nothing else changed, played back). "Click mascot to get
+  help" offers a demonstration on an isolated copy of the show or a typed
+  question answered from the lesson's own knowledge, offline.
+- **The archive's lesson maps**: the earlier lessons grouped by what they teach
+  (the interface, graphs, terminology, functions, hydraulics, diagnosis,
+  assignments), with a Begin here card pointing at the first unfinished lesson.
 - **A lesson**: a compact panel on the left with the step count, one action,
   and Back / Next, while Rosie stands beside the control the step is about
   (or in the panel when there is nothing to point at) and says the step's
@@ -93,7 +106,8 @@ security model, and what has and has not been verified on Windows.
   timing), each guided lesson, the ten classic topic notes, and the three
   assignments. Aliases such as netmask/mask, PC Mac/PC•MACs, and channel/DMX are
   understood.
-- **Progress** (top right): lessons finished per level, lessons to review,
+- **Progress** (top right): the course's lessons finished, the last training
+  activity, films watched and help used, the archive of earlier levels,
   records carried over from the earlier version, where the file is saved, and
   Start over (with confirmation).
 - **The PC•MACs windows**, recreated from the PC•MACs manual (January 13, 2021
@@ -153,9 +167,13 @@ evidence label. (F1 is Play in PC•MACs; here it stays the help key.)
 A small JSON file in the app's own user-data folder (the Progress view shows the
 path, typically `%APPDATA%\Roseflow PC Mac Training\progress.json`). It is
 independent of One File and is never sent anywhere. The file is schema version
-3; since October 23, 2026 it also remembers whether Rosie's welcome has been
-seen. A file written by an earlier build is read, backed up beside itself
-(`progress.v1-backup.json` or `progress.v2-backup.json`), and carried forward:
+4: since October 31, 2026 it carries a `training` record (last real activity,
+the checkpoint, films watched or skipped, steps attempted or assisted, the
+restart history). Sound and confirmation preferences live beside it in
+`preferences.json`, and a confirmed restart keeps the old run as
+`progress.previous-run-<stamp>.json` (the three newest are kept). A file
+written by an earlier build is read, backed up beside itself
+(`progress.v1-backup.json`, `progress.v2-backup.json`, or `progress.v3-backup.json`), and carried forward:
 finished lessons and steps stay finished, answered questions and finished
 exercise steps pre-mark the guided steps that reuse them, and a saved light
 pattern becomes the same ON time in frames. See
@@ -166,8 +184,12 @@ banner and keeps your work in memory while the app is open.
 ## Privacy
 
 The bundled reference photos were taken in the team workshop and include other
-people and team equipment. Keep this repository private until the owner decides
-what may be distributed. No license is asserted for the photos or the
+people and team equipment. The five archive photographs of the orientation film
+(`src/renderer/assets/archive/`, 1949–2026) come from Cal Poly and Cal Poly
+Pomona news and magazine pages, credited in `src/renderer/content/archive.mjs`
+and `docs/brief/2026-10-31-revision-4/SOURCES.md`; their redistribution
+licence is not established. Keep this repository private until the owner
+decides what may be distributed. No license is asserted for the photos or the
 manufacturer documentation; manuals are linked, not bundled.
 
 ## Repository map

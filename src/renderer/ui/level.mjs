@@ -26,7 +26,10 @@ export function mountLevel(container, { dispatch }) {
     const nextStatus = lessonStatus(next, state.learning);
 
     replace(container, el('div', { class: 'level-map' },
-      el('div', { class: 'btn-row' }, el('button', { type: 'button', class: 'btn btn-small', 'data-control': 'nav-home', 'data-fid': 'home', text: 'Home', onclick: () => dispatch({ type: 'go-home' }) })),
+      el('div', { class: 'btn-row' },
+        el('button', { type: 'button', class: 'btn btn-small', 'data-control': 'nav-home', 'data-fid': 'home', text: 'Hub', onclick: () => dispatch({ type: 'go-home' }) }),
+        el('button', { type: 'button', class: 'btn btn-small', 'data-control': 'nav-progress', 'data-fid': 'progress', text: 'Progress', onclick: () => dispatch({ type: 'go-progress' }) })),
+      el('p', { class: 'archive-kicker', text: 'Earlier lessons (archive). Kept from the previous version; not part of the current course.' }),
       el('div', { class: 'top' }, el('h1', { text: level.name })),
       el('p', { class: 'tagline', text: level.tagline }),
       // Rosie stands beside this card (its data-target) and says what to do; the card names the lesson.

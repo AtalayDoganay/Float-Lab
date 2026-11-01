@@ -1,0 +1,206 @@
+[
+  {
+    "filename": "references/A_Current_Rose_Mascot.png",
+    "title": "A — Current rose mascot",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      347,
+      417
+    ],
+    "sha256": "26837a9a9d38d04f161bf8eb03825d0dacd7d591b46efae37d773acef955a61e",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/A_Current_Rose_Mascot.png",
+    "original_sha256": "26837a9a9d38d04f161bf8eb03825d0dacd7d591b46efae37d773acef955a61e",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/B_Rounded_Body_Reference.png",
+    "title": "B — Rounded body-shape target",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      280,
+      721
+    ],
+    "sha256": "12605e1374b3b40ffa73d09b90ea40b651107810ce6ab16acf9b62371da8429d",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/B_Rounded_Body_Reference.png",
+    "original_sha256": "12605e1374b3b40ffa73d09b90ea40b651107810ce6ab16acf9b62371da8429d",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/C_Expressive_Robot_Reference.png",
+    "title": "C — Expressive robot faces",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      876,
+      710
+    ],
+    "sha256": "2c524679a3ad951ab7b2fd6a480a14b41ba716dc786daa33395cc879e2ab2b2c",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/C_Expressive_Robot_Reference.png",
+    "original_sha256": "2c524679a3ad951ab7b2fd6a480a14b41ba716dc786daa33395cc879e2ab2b2c",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/D_Robot_Performance_Reference.png",
+    "title": "D — Robot demonstration poses",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      751,
+      521
+    ],
+    "sha256": "c137eefb02e8e46a17b2216a54b53a0bd835fd4c7c783f5bb5d444dd12e6baa2",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/D_Robot_Performance_Reference.png",
+    "original_sha256": "c137eefb02e8e46a17b2216a54b53a0bd835fd4c7c783f5bb5d444dd12e6baa2",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/E_Owl_Expression_Reference.png",
+    "title": "E — Owl expression range",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      1090,
+      596
+    ],
+    "sha256": "f9672e32e0699edd29f1cf10b629af5fb1a56ed64b06e3c157b168df6b63e28a",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/E_Owl_Expression_Reference.png",
+    "original_sha256": "f9672e32e0699edd29f1cf10b629af5fb1a56ed64b06e3c157b168df6b63e28a",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/F_24_Expression_Reference.png",
+    "title": "F — Full 24-expression palette",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      563,
+      1200
+    ],
+    "sha256": "be1575fb48d58c62646a297701afa9a396d52eb268f366f3c784953905338b4a",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/F_24_Expression_Reference.png",
+    "original_sha256": "be1575fb48d58c62646a297701afa9a396d52eb268f366f3c784953905338b4a",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/G_Existing_Homepage.png",
+    "title": "G — Existing homepage to redesign",
+    "credit": "User-supplied visual reference",
+    "source_page": null,
+    "image_url": null,
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      1917,
+      1017
+    ],
+    "sha256": "3e42472779db74bf8eec4184dcc977f291804fe06151b76ca2b380dc7a9026af",
+    "rights_status": "User-supplied reference",
+    "original_filename": "references/G_Existing_Homepage.png",
+    "original_sha256": "3e42472779db74bf8eec4184dcc977f291804fe06151b76ca2b380dc7a9026af",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/H_1949_Rocking_Horse.png",
+    "title": "H — 1949: Rocking Horse",
+    "credit": "Information Technology Services, Special Collections and Archives, Cal Poly; via Cal Poly Magazine",
+    "source_page": "https://magazine.calpoly.edu/spring-summer-2024/75-years-of-rose-float/",
+    "image_url": "https://magazine.calpoly.edu/wp-content/uploads/2024/05/ss24_rose-inset-rocking-horse-750x500.jpg",
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      750,
+      500
+    ],
+    "sha256": "c1c4ca43e7950173b26fdfdec4f61368f53d4d130e16ee2656da14277003d6c7",
+    "rights_status": "Reference inclusion; redistribution license not established",
+    "original_filename": "references/H_1949_Rocking_Horse.jpg",
+    "original_sha256": "3210bd9d39d7aa10e1c1c6b827c67817ce34007c126f0983c492bc62d65c9754",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/I_1978_Grin_And_Bear_It.png",
+    "title": "I — 1978: Grin and Bear It",
+    "credit": "Cal Poly Magazine; individual photographer not identified in the timeline caption",
+    "source_page": "https://magazine.calpoly.edu/spring-summer-2024/75-years-of-rose-float/",
+    "image_url": "https://magazine.calpoly.edu/wp-content/uploads/2024/05/ss24_rose-float-timeline_grin-and-bear-it-750x500.jpg",
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      750,
+      500
+    ],
+    "sha256": "f1598c5b70fb9b087295357990759dcc9dbf3e9f121af6de7a8e4ec1348af850",
+    "rights_status": "Reference inclusion; redistribution license not established",
+    "original_filename": "references/I_1978_Grin_And_Bear_It.jpg",
+    "original_sha256": "bc45738f96614396e82cc955fa26a3ae308cb551aa01cc21872bb66add162c47",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/J_2024_Shock_N_Roll.png",
+    "title": "J — 2024: Shock n’ Roll: Powering the Musical Current",
+    "credit": "Tom Zasadzinski, Cal Poly Pomona; via Cal Poly News",
+    "source_page": "https://www.calpoly.edu/news/cal-poly-float-wins-crown-city-innovator-award-2024-rose-parade",
+    "image_url": "https://www.calpoly.edu/sites/default/files/styles/width_2048px/public/2024-01/news_rose-parade_hero_2.jpg?itok=qxlchNVX",
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      1200,
+      800
+    ],
+    "sha256": "d7882c8ae5cb3425588a01c6150cdfbd3eebc7def904c438121421499bede718",
+    "rights_status": "Reference inclusion; redistribution license not established",
+    "original_filename": "references/J_2024_Shock_N_Roll.jpg",
+    "original_sha256": "f604cbfdcc2d16cef58a3a9c29612793df92dc9baffdea3229169620127b8b97",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/K_2025_Nessies_Lakeside_Laughs.png",
+    "title": "K — 2025: Nessie’s Lakeside Laughs",
+    "credit": "Cal Poly Pomona / CPP News; individual photographer not identified on the source page",
+    "source_page": "https://www.cpp.edu/news/content/2025/01/cal-poly-universities-win-leishman-public-spirit-award-for-76th-rose-float/index.shtml",
+    "image_url": "https://www.cpp.edu/news/img/news/2025/01/25rose-float-parade-pasadena.jpg",
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      1100,
+      700
+    ],
+    "sha256": "1aa25f8123e26580f2180979f18204728bdd6a95487dec0cdd6945c2eec279d9",
+    "rights_status": "Reference inclusion; redistribution license not established",
+    "original_filename": "references/K_2025_Nessies_Lakeside_Laughs.jpg",
+    "original_sha256": "6881940780f4e73380a3bbd781a6ef7c99ead9d1a21938a1d5a7d5319fe4346e",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  },
+  {
+    "filename": "references/L_2026_Jungle_Jumpstart.png",
+    "title": "L — 2026: Jungle Jumpstart",
+    "credit": "Tom Zasadzinski, Cal Poly Pomona; via Cal Poly News",
+    "source_page": "https://www.calpoly.edu/news/cal-poly-float-wins-sweepstakes-award-2026-rose-parade",
+    "image_url": "https://www.calpoly.edu/sites/default/files/styles/width_2048px/public/2026-01/26rose-parade1-lead-crop.jpg?itok=QimLHajG",
+    "retrieved_or_supplied_date": "2026-10-31",
+    "dimensions": [
+      800,
+      533
+    ],
+    "sha256": "70b59eb9a893cf8297ba4dff0a2c2c2f8f9951256fbd3caae2c59ee038aab6f1",
+    "rights_status": "Reference inclusion; redistribution license not established",
+    "original_filename": "references/L_2026_Jungle_Jumpstart.jpg",
+    "original_sha256": "7157f6d6f6288595e3967a51caf1b6a3931dee4cebff357ae99921faaec5e711",
+    "packaging_note": "Real PNG file; decoded pixels match supplied source."
+  }
+]

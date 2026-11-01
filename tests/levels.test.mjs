@@ -14,7 +14,7 @@ const exerciseStepIds = new Set(EXERCISES.flatMap((e) => e.steps.map((s) => `${e
 test('the three levels are named exactly Basic, intermediate, and I hate my life, in that order', () => {
   assert.deepEqual(LEVELS.map((l) => l.id), ['basic', 'intermediate', 'hate']);
   assert.deepEqual(LEVELS.map((l) => l.name), ['Basic', 'intermediate', 'I hate my life']);
-  assert.deepEqual(LEVELS.map((l) => l.id), [...SCHEMA_LEVELS], 'the schema and the content agree on level ids');
+  assert.deepEqual([...LEVELS.map((l) => l.id), 'course'], [...SCHEMA_LEVELS], 'the schema allows the three legacy levels and the one course');
   for (const level of LEVELS) {
     assert.ok(nonEmpty(level.tagline), `${level.id} needs a one-line description`);
     assert.ok(level.groups.length >= 3, `${level.id} groups topics by function`);

@@ -260,6 +260,27 @@ To check the look without the app: the preview page and the hidden-window
 renderer used for this pass live in the session scratchpad, not in the
 repository; `node scripts/smoke.mjs --shots <dir>` captures her in the app.
 
+## Rosie as the training film's performer (October 31, 2026)
+
+The Revision 4 brief (`docs/brief/2026-10-31-revision-4/`) asked for a
+rounder 3D guide with at least 24 distinct expressions, removable glasses,
+original chirps, a separate mechanical Robot Rosie, and help on a click.
+`docs/FIRST_SEGMENT.md` records what was built; this section records where
+to change her.
+
+| What | Where |
+| --- | --- |
+| The broad torso, capsule arms, round feet, and the glasses group on her head | `src/renderer/guide/rosie-model.mjs` (`buildRosie`); `poseFor` takes `glasses` and gives the six families their body language |
+| The 24 faces (six families of four) and the five extras, parametric brows / eyes / mouth / marks, silent and speaking | `src/renderer/guide/face.mjs` (`TABLE`, `faceParams`, `drawFace`); legacy names map through `FACE_ALIASES` |
+| The sprite fallback for every name | `src/renderer/content/mascot.mjs` (`spriteFor`) |
+| Hover and focus reactions with dwell and rate limits | `src/renderer/logic/attention.mjs`, read by `ui/guide-layer.mjs` from `[data-react]` elements |
+| Her chirps (short bursts per word group, pitch and tempo by emotion) | `src/renderer/logic/audio-plan.mjs` (`chirpPhrase`), played by `ui/audio.mjs` |
+| Her film cues (expression, glasses, line, chirp) and where she stands during a film | `content/films/one-second-on.mjs`, `content/intro.mjs`; `logic/guide-plan.mjs` (`lessonPlan` while the cinema plays, `introPlan`) |
+| Her help label and popover | `ui/rosie-help.mjs`; the label rides above her in `ui/guide-layer.mjs` |
+| Guarding Restart (cover placement, the tickled pose) | `logic/guide-plan.mjs` (`guardPlan`), `logic/guide-placement.mjs` (`placeCover`), `rosie-model.mjs` (`tickled`) |
+| Robot Rosie, a different character | `guide/robot-model.mjs`, `ui/robot-preview.mjs`, `content/robot-mapping.mjs` |
+| The contact sheets for review | `guide/contact-sheet.mjs`; `node scripts/smoke.mjs --shots <dir>` writes `expressions-faces.png` and `expressions-rosie-3d.png` |
+
 ### Sources read for this pass
 
 - Duolingo, illustration guidelines (design.duolingo.com) and the blog posts

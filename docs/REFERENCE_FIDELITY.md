@@ -74,7 +74,9 @@ low-resolution preview frames and the Gilderfluke videos have no captions.
 | Clock-face menus, digit-by-digit time editing with mouse clicks | not simulated | pp. 84, 243–246; the fields take typed times |
 | Thin black play-position line during playback | assumed | the manual mentions scrolling while playing but shows no playhead |
 | Zoom with Time In / Time Out (three steps) | manual behaviour, adapted steps | p. 77 |
-| Values Out / In, rubberbanding, Shift/Ctrl right-drags, triggers, presets, Move to OffLine, channel sorting, name drag | not simulated | pp. 78–112 |
+| Values Out / In, rubberbanding, Shift/Ctrl right-drags, triggers, presets, Move to OffLine, channel sorting, name drag | not simulated | pp. 78–112; Values Out / In are taught as the vertical zoom of the analog scale (p. 77), in one short orientation |
+| Digital channel labels "Digital 0" / "Digital 1" in the first-segment show; "Light 1 Digital" / "Light 2 Digital" in the earlier lessons | adapted | channel names are the show author's in PC•MACs; the first segment's show names them as the October 31, 2026 brief does |
+| Time Out / Time In as two separately addressable menu-bar controls | manual | p. 76; one help entry each so a lesson can point at either |
 | Splitter between panes, vertical scroll bars | drawn only | p. 235 |
 
 ## Control Window
@@ -142,7 +144,10 @@ low-resolution preview frames and the Gilderfluke videos have no captions.
 | Hypothetical laptop address and example travel range | adapted |
 | Trainer note strip under the windows | adapted |
 | Lesson panel, handbook, hover/focus tooltips, F1 help, Help ? “What's this?” mode | adapted |
-| Rosie (the guide), her welcome dialog, and the speech-bubble lesson panel with its look / watch / try beats | adapted; Rosie is an original drawing after the Cal Poly Rose Float logo, never shown inside the recreated windows (see `docs/GUIDE_DESIGN.md`) |
+| Rosie (the guide), her speech-bubble lesson panel with its look / watch / try beats, her help, and the guarded restart | adapted; Rosie is an original drawing after the Cal Poly Rose Float logo, never shown inside the recreated windows (see `docs/GUIDE_DESIGN.md`, `docs/FIRST_SEGMENT.md`) |
+| Robot Rosie, the simulated output preview beside the windows | adapted; trainer only, driven by the simulated outputs; the mapping of Digital 0 to her petals is a proposal, not a claim about any mechanism |
+| The demonstration cursor and the narrated films | adapted; the cursor runs the recreated controls' own handlers (a real click on a menu title or item, real pointer events on a pane), never a hidden write of the answer |
+| The orientation film, the hub, the course map, the archive photos, the retro theme | adapted; outside the recreated windows, which keep their Windows look |
 
 ## Photographed values quoted in lessons
 

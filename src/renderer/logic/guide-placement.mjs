@@ -42,12 +42,17 @@ function placeBubble({ V, boxY, box, bubble, viewport, target, prefer, avoid = [
   };
   const opposite = prefer === 'right' ? 'left' : 'right';
   const order = [prefer, opposite, 'below', 'above'];
-  // A bubble stacked below or above her may slide sideways to clear the target.
-  const slideClear = (r) => {
+  // A bubble stacked below or above her may slide sideways to clear the target;
+  // a bubble beside her may slide up or down past it, as long as it still
+  // stands beside her (level with some part of her). The nearest clear spot wins.
+  const beside = (o) => o.y < V.y + V.h && o.y + o.h > V.y;
+  const slideClear = (r, axis) => {
     if (!target || !intersects(r, target)) return r;
-    const options = [{ ...r, x: target.x - r.w - GAP }, { ...r, x: target.x + target.w + GAP }]
+    const options = (axis === 'x'
+      ? [{ ...r, x: target.x - r.w - GAP }, { ...r, x: target.x + target.w + GAP }]
+      : [{ ...r, y: target.y - r.h - GAP }, { ...r, y: target.y + target.h + GAP }].filter(beside))
       .filter((o) => fits(o, viewport) && !intersects(o, target))
-      .sort((a, b) => Math.abs(a.x - r.x) - Math.abs(b.x - r.x));
+      .sort((a, b) => Math.abs(a[axis] - r[axis]) - Math.abs(b[axis] - r[axis]));
     return options[0] || r;
   };
   // The first side that fits, misses the target, and touches nothing avoided;
@@ -60,7 +65,7 @@ function placeBubble({ V, boxY, box, bubble, viewport, target, prefer, avoid = [
     let r = clampRect(raw, viewport);
     const slidOnMainAxis = side === 'right' || side === 'left' ? r.x !== raw.x : r.y !== raw.y;
     if (slidOnMainAxis || !fits(r, viewport)) continue;
-    if (side === 'below' || side === 'above') r = slideClear(r);
+    r = slideClear(r, side === 'below' || side === 'above' ? 'x' : 'y');
     if (target && intersects(r, target)) continue;
     const cost = weighted(r);
     if (cost === 0) return { x: r.x, y: r.y, side };
@@ -123,11 +128,21 @@ export function placeBeside({ viewport, target, box = ROSIE_BOX, bubble, avoid =
   return result({ V, box, side: 'right', facing: facingFrom(V, target), bubble, viewport, target: null, prefer: 'right', overlapsTarget: intersects(V, target) });
 }
 
-export function placeAtDock({ dock, viewport, box = ROSIE_BOX, bubble }) {
+// At a dock she faces the way the dock says (left, toward content on her
+// left, or right); her bubble keeps off the avoided rectangles as elsewhere.
+export function placeAtDock({ dock, viewport, box = ROSIE_BOX, bubble, avoid = [], facing = 'right' }) {
   const x = dock.x + dock.w / 2 - box.w / 2;
   const y = dock.y + dock.h / 2 - box.h / 2;
   const V = visibleBox({ x, y }, box);
-  return result({ V, box, side: 'dock', facing: 'right', bubble, viewport, target: null, prefer: 'right' });
+  return result({ V, box, side: 'dock', facing, bubble, viewport, target: null, prefer: facing === 'left' ? 'right' : 'left', avoid });
+}
+
+// Standing in front of a control she guards: her visible box is centred on it.
+export function placeCover({ target, viewport, box = ROSIE_BOX, bubble, avoid = [] }) {
+  const vw = box.w - 2 * box.inset;
+  const vh = box.h - 2 * box.inset;
+  const V = clampRect({ x: target.x + target.w / 2 - vw / 2, y: target.y + target.h / 2 - vh * 0.62, w: vw, h: vh }, viewport);
+  return result({ V, box, side: 'cover', facing: 'right', bubble, viewport, target: null, prefer: 'right', avoid });
 }
 
 export function placeAtCenter({ viewport, box = ROSIE_BOX, bubble }) {

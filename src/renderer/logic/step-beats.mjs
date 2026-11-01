@@ -10,28 +10,36 @@ export const BEATS = Object.freeze(['look', 'watch', 'try']);
 
 const DEMO_FINISHED = 'Demonstration finished. Now you try.';
 
-export function initialBeat(step, done) {
-  return step.kind === 'practice' && done ? 'try' : 'look';
+// A practice step opens in its try beat once it is done, or once its film has
+// already been watched or skipped (the handoff from the watch step must not
+// offer the same film a second time); the film stays reachable from help.
+export function initialBeat(step, done, { filmSeen = false } = {}) {
+  return step.kind === 'practice' && (done || (filmSeen && Boolean(step.film))) ? 'try' : 'look';
 }
 
 const nextAction = (isLast) => ({ id: 'next', label: isLast ? 'Finish lesson' : 'Next' });
 
+// A step demonstrates through a plain demo or a narrated film.
+const demoOf = (step) => step.film || step.demo;
+
 export function primaryAction({ step, beat, done, demo, isLast = false }) {
   if (beat === 'watch') {
-    if (demo.running || !demo.finished) return { id: 'wait', label: 'Demonstrating…' };
-    return step.kind === 'practice' && !done ? { id: 'your-turn', label: 'Your turn' } : nextAction(isLast);
+    if (demo.running || !demo.finished) return { id: 'wait', label: step.film ? 'Playing…' : 'Demonstrating…' };
+    if (step.kind === 'practice' && !done) return { id: 'your-turn', label: step.film ? 'Try it' : 'Your turn' };
+    // After a film the handoff is explicit: the next step is the practice.
+    return step.film && !isLast ? { id: 'next', label: 'Try it' } : nextAction(isLast);
   }
   if (beat === 'try') return done ? nextAction(isLast) : { id: 'check', label: 'Check' };
   // look
   if (done) return nextAction(isLast);
-  if (step.demo) return { id: 'show-me', label: 'Show me' };
+  if (demoOf(step)) return { id: 'show-me', label: step.film ? 'Watch' : 'Show me' };
   if (step.kind === 'practice') return { id: 'your-turn', label: 'Your turn' };
   if (step.kind === 'question') return null;
   return nextAction(isLast);
 }
 
 export function secondaryActions({ step, beat, done, demo }) {
-  if (!step.demo || demo.running) return [];
+  if (!demoOf(step) || demo.running) return [];
   // A finished step keeps its demonstration reachable: teaching material is never hidden.
   if (done) return [{ id: 'watch-again', label: 'Watch again' }];
   if (beat === 'look' && step.kind === 'practice') return [{ id: 'skip-to-try', label: 'Skip to trying' }];
@@ -55,7 +63,7 @@ export function bubbleText({ step, beat, done, feedback, demo }) {
     if (!feedback.ok && step.kind === 'question') lines.push(step.question.prompt);
     return { title, lines };
   }
-  if (beat === 'watch') return { title, lines: [demo.running || !demo.finished ? step.demo.intro : (step.demo.outro || DEMO_FINISHED)] };
+  if (beat === 'watch') { const d = demoOf(step); return { title, lines: [demo.running || !demo.finished ? d.intro : (d.outro || DEMO_FINISHED)] }; }
   if (beat === 'try') {
     return done
       ? { title, lines: [LINES.done({ success: step.practice.success })] }

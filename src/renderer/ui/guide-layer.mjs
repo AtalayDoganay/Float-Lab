@@ -7,13 +7,14 @@
 // layer is transparent to the pointer, so she never blocks a click.
 import { el, replace } from './dom.mjs';
 import { mascotSrc } from '../content/mascot.mjs';
-import { ROSIE_BOX, placeBeside, placeAtDock, placeAtCenter, placeAtCorner, visibleBox } from '../logic/guide-placement.mjs';
+import { ROSIE_BOX, placeBeside, placeAtDock, placeAtCenter, placeAtCorner, placeCover, visibleBox } from '../logic/guide-placement.mjs';
 import { springAdvance, bank, squashAt, nextBlinkDelay, blinkAmount, talkEnvelope, settled } from '../logic/motion.mjs';
 import { createStage } from '../guide/stage.mjs';
 import { buildRosie, poseFor, applyPose, COLORS } from '../guide/rosie-model.mjs';
 import { FACE_SIZE, faceParams, drawFace } from '../guide/face.mjs';
 import { createEffects } from '../guide/effects.mjs';
 import { createInteraction } from '../logic/guide-interaction.mjs';
+import { createAttention } from '../logic/attention.mjs';
 
 const INERT_SELECTORS = ['header', 'main', '#persistence-notice'];
 const WELCOME_LABEL = 'Welcome from Rosie, the guide';
@@ -76,11 +77,12 @@ const rectOf = (node) => {
   return r.width > 0 && r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null;
 };
 
-export function mountGuideLayer({ dispatch, findControl, THREE }) {
+export function mountGuideLayer({ dispatch, findControl, THREE, audio = null }) {
   const layer = document.getElementById('guide-layer');
   const backdrop = document.getElementById('welcome-backdrop');
   const rosie = document.getElementById('rosie');
   const bubble = document.getElementById('rosie-bubble');
+  const helpLabel = document.getElementById('rosie-help');
   const reduceQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   let reducedOverride = null; // the smoke harness can force reduced motion on or off
   let reduced = reduceQuery.matches;
@@ -173,6 +175,20 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
   const pointer = { x: -1, y: -1 };
   let bubbleSize = { w: 320, h: 120 };
 
+  // Hover and focus reactions on the page's [data-react] elements (brief §16),
+  // rate-limited by the attention machine; a reaction overlays the plan's
+  // expression for a moment, with a line for a long dwell on a photo.
+  const attention = createAttention();
+  let reaction = null; // { expression, line, until }
+  let reactionKey = '';
+  let override = null; // { expression, glasses } forced by the review harness
+  const reactTarget = (t) => (t instanceof Element ? t.closest('[data-react]') : null);
+  const enterReact = (node) => { if (node) attention.enter(node.dataset.react, node.dataset.fid || node.dataset.react, clock, { caption: node.dataset.caption || null }); };
+  document.addEventListener('pointerover', (event) => { const n = reactTarget(event.target); if (n) enterReact(n); }, { passive: true });
+  document.addEventListener('pointerout', (event) => { const n = reactTarget(event.target); if (n && !n.contains(event.relatedTarget)) attention.leave(); }, { passive: true });
+  document.addEventListener('focusin', (event) => { const n = reactTarget(event.target); if (n) enterReact(n); });
+  document.addEventListener('focusout', (event) => { if (reactTarget(event.target)) attention.leave(); });
+
   const herBox = () => (placed ? visibleBox({ x: pos.x.x, y: pos.y.x }) : null);
   window.addEventListener('pointermove', (event) => {
     pointer.x = event.clientX;
@@ -185,7 +201,12 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
     if (scene === 'none' || layer.hidden) return;
     const t = event.target;
     const interactive = Boolean(t && t.closest && t.closest(INTERACTIVE));
-    if (interaction.pointerDown({ x: event.clientX, y: event.clientY, clock, box: herBox(), interactive })) { pendingPuff = true; boops += 1; }
+    if (interaction.pointerDown({ x: event.clientX, y: event.clientY, clock, box: herBox(), interactive })) {
+      pendingPuff = true;
+      boops += 1;
+      // During practice a click on her is a call for help (brief §7).
+      if (plan && plan.help) dispatch({ type: 'help-open-menu' });
+    }
   }, { passive: true, capture: true });
   document.addEventListener('pointerleave', () => { pointer.x = -1; pointer.y = -1; interaction.pointerLeave(); });
   document.addEventListener('keydown', (event) => {
@@ -250,16 +271,21 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       const r = rectOf(node);
       if (r) out.push({ ...r, weight: node === ownWindow ? 2 : 1 });
     }
-    for (const node of document.querySelectorAll('#panel .beat-actions, #panel .nav-row')) {
+    for (const node of document.querySelectorAll('#panel .beat-actions, #panel .nav-row, .hub-actions, #robot')) {
       const r = rectOf(node);
       if (r) out.push({ ...r, weight: 4 });
+    }
+    for (const node of document.querySelectorAll('.hub-print, #stage .lesson-rows')) {
+      const r = rectOf(node);
+      if (r) out.push({ ...r, weight: 2 });
     }
     return out;
   }
 
-  function dockPlacement(vp) {
-    const dock = rectOf(document.getElementById('guide-dock'));
-    if (dock) { resolved = 'dock'; anchorRect = dock; return placeAtDock({ dock, viewport: vp, bubble: bubbleSize }); }
+  function dockPlacement(vp, id = 'guide-dock') {
+    const node = document.getElementById(id);
+    const dock = rectOf(node);
+    if (dock) { resolved = 'dock'; anchorRect = dock; return placeAtDock({ dock, viewport: vp, bubble: bubbleSize, avoid: avoidRects(), facing: node.dataset.facing || 'right' }); }
     resolved = 'corner';
     anchorRect = null;
     return placeAtCorner({ viewport: vp, bubble: bubbleSize });
@@ -280,7 +306,12 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       }
       return dockPlacement(vp);
     }
-    if (anchor.kind === 'dock') return dockPlacement(vp);
+    if (anchor.kind === 'cover') {
+      const target = rectOf(findControl(anchor.id));
+      if (target) { resolved = 'cover'; anchorRect = target; return placeCover({ target, viewport: vp, bubble: bubbleSize, avoid: [] }); }
+      return dockPlacement(vp);
+    }
+    if (anchor.kind === 'dock') return dockPlacement(vp, anchor.id || 'guide-dock');
     if (anchor.kind === 'center') { resolved = 'center'; anchorRect = null; return placeAtCenter({ viewport: vp, bubble: bubbleSize }); }
     resolved = 'corner';
     anchorRect = null;
@@ -345,6 +376,38 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
     rosie.style.transform = `translate3d(${pos.x.x.toFixed(1)}px, ${pos.y.x.toFixed(1)}px, 0)`;
     bubble.dataset.side = goal.bubble.side;
     bubble.style.transform = `translate3d(${(goal.bubble.x - goal.x + pos.x.x).toFixed(1)}px, ${(goal.bubble.y - goal.y + pos.y.x).toFixed(1)}px, 0)`;
+    // The help label rides above her head throughout practice.
+    const showHelp = Boolean(plan.help);
+    if (helpLabel.hidden === showHelp) helpLabel.hidden = !showHelp;
+    if (showHelp) {
+      const lw = helpLabel.offsetWidth || 180;
+      const lh = helpLabel.offsetHeight || 30;
+      const lx = Math.min(Math.max(4, pos.x.x + ROSIE_BOX.w / 2 - lw / 2), window.innerWidth - lw - 4);
+      const ly = Math.max(4, pos.y.x + ROSIE_BOX.inset - lh - 6);
+      helpLabel.style.transform = `translate3d(${lx.toFixed(1)}px, ${ly.toFixed(1)}px, 0)`;
+    }
+
+    // Reactions to what the pointer rests on, laid over the plan for a moment.
+    const r = attention.update(clock).react;
+    if (r) {
+      reaction = { expression: r.expression, line: r.line, until: clock + (r.line ? 3.5 : 1.4) };
+      if (r.chirp && audio) { if (r.line) audio.chirp(r.line, 'neutral'); else audio.cue('hover'); }
+      interaction.activity(clock);
+    }
+    if (reaction && clock >= reaction.until) reaction = null;
+    const wantExpression = override ? override.expression : (reaction ? reaction.expression : plan.expression);
+    if (wantExpression !== expression) {
+      expression = wantExpression;
+      expressionAt = clock;
+      faceKey = '';
+      if (img) img.src = mascotSrc(expression);
+    }
+    const nextReactionKey = reaction && reaction.line ? reaction.line : '';
+    if (nextReactionKey !== reactionKey) {
+      reactionKey = nextReactionKey;
+      buildBubble(reactionKey ? { ...plan, title: null, lines: [reactionKey], welcome: null, feedbackOk: null } : plan);
+      if (reactionKey) talkAt = clock;
+    }
 
     // Blink schedule.
     if (clock - blinkAt >= blinkNext) { blinkAt = clock; blinkNext = nextBlinkDelay(); }
@@ -357,7 +420,7 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
     const blink = idle && idle.action === 'blink2' ? doubleBlink(idle.since) : blinkAmount(clock - blinkAt);
 
     if (mode === 'webgl' && model) {
-      const pose = poseFor({ expression, t: clock - expressionAt, phase: clock, look, facing, reduced, mood, moodT: snap.since, idle, toward: snap.toward, near: snap.near });
+      const pose = poseFor({ expression, t: clock - expressionAt, phase: clock, look, facing, reduced, mood, moodT: snap.since, idle, toward: snap.toward, near: snap.near, glasses: override ? Boolean(override.glasses) : Boolean(plan.glasses) });
       const lean = reduced ? { roll: 0, pitch: 0 } : bank(pos.x.v, pos.y.v);
       pose.root.roll += lean.roll;
       pose.root.pitch += lean.pitch;
@@ -434,6 +497,7 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       scene = 'none';
       setModal(false);
       layer.hidden = true;
+      helpLabel.hidden = true;
       stop();
       return;
     }
@@ -450,12 +514,14 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
     const nextTextKey = [next.title || '', next.feedbackOk, next.welcome ? next.welcome.step : '', ...next.lines].join('\u0001');
     if (nextTextKey !== textKey) {
       textKey = nextTextKey;
+      reaction = null;
+      reactionKey = '';
       buildBubble(next);
       talks += 1;
       talkAt = clock;
       interaction.activity(clock);
     }
-    if (next.expression !== expression) {
+    if (next.expression !== expression && !reaction) {
       expression = next.expression;
       expressionAt = clock;
       faceKey = '';
@@ -495,8 +561,16 @@ export function mountGuideLayer({ dispatch, findControl, THREE }) {
       reduced,
       frames,
       pageVisible,
+      help: !helpLabel.hidden,
+      helpRect: helpLabel.hidden ? null : rectOf(helpLabel),
+      glasses: override ? Boolean(override.glasses) : Boolean(plan && plan.glasses),
     };
   }
 
-  return { update, debug, setVisible, setReduced };
+  function setOverride(o) {
+    override = o && o.expression ? { expression: o.expression, glasses: Boolean(o.glasses) } : null;
+    faceKey = '';
+  }
+
+  return { update, debug, setVisible, setReduced, setOverride };
 }
