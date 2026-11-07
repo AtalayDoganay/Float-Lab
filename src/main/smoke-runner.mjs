@@ -6,7 +6,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const SCENARIOS = ['first', 'resume', 'malformed', 'savefail', 'loadfail', 'legacy', 'legacy2', 'practice', 'course', 'sheet', 'record'];
+const SCENARIOS = ['first', 'resume', 'malformed', 'savefail', 'loadfail', 'legacy', 'legacy2', 'practice', 'course', 'sheet', 'record', 'zoom'];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -74,6 +74,7 @@ export function createSmokeRunner({ session, store }) {
       if (scenario === 'course') await scenarioCourse(js, win);
       if (scenario === 'sheet') await scenarioSheet(js, win);
       if (scenario === 'record') await scenarioRecord(js, win);
+      if (scenario === 'zoom') await scenarioZoom(js, win);
 
       check('no network requests were made', networkRequests.length === 0, networkRequests.slice(0, 5));
       check('no renderer console errors', consoleErrors.length === 0, consoleErrors.slice(0, 5));
@@ -1022,6 +1023,69 @@ export function createSmokeRunner({ session, store }) {
 
   // Review material: the expression contact sheets and a few in-app captures
   // of the 3D character with and without her glasses.
+  // ---- Time In / Time Out: everything on the time axis zooms together, and
+  // nothing else moves. Start at 1 s and Stop at 7 s must sit on the ruler's
+  // 1 s and 7 s ticks at every zoom; the frame labels repeat the same way in
+  // every second; the window keeps its height; the left edge keeps its time.
+  async function scenarioZoom(js, win) {
+    const dir = process.env.ROSEFLOW_SMOKE_SHOT_DIR;
+    if (dir) await fs.mkdir(dir, { recursive: true });
+    await js(d({ type: 'intro-skip' }));
+    await sleep(600);
+    await js(d({ type: 'start-training' }));
+    await js(d({ type: 'start-lesson', id: 's1-orientation', stepIndex: 8 }));
+    await js(d({ type: 'set-transport-time', which: 'start', frame: 30 }));
+    await js(d({ type: 'set-transport-time', which: 'stop', frame: 210 }));
+    await sleep(400);
+    const measure = () => js(`(() => {
+      const inner = document.querySelector('.ev-inner').getBoundingClientRect();
+      const majors = [...document.querySelectorAll('.ev-ruler .rl-tick.major')].map((n) => n.getBoundingClientRect().left);
+      const at = (sel) => { const n = document.querySelector(sel); return n ? n.getBoundingClientRect().left : null; };
+      const labels = [...document.querySelectorAll('.ev-ruler .rl-num')].map((n) => {
+        const r = n.getBoundingClientRect();
+        return Math.round(((r.left + r.width / 2 - inner.left) / inner.width) * ${240});
+      });
+      const perSecond = [];
+      for (const f of labels) { const s = Math.floor(f / 30); (perSecond[s] = perSecond[s] || []).push(f % 30); }
+      return {
+        height: Math.round(document.querySelector('.edit-view').getBoundingClientRect().height * 10) / 10,
+        start: { marker: at('.ev-digital line.marker.start'), tick: majors[1] },
+        stop: { marker: at('.ev-digital line.marker.stop'), tick: majors[7] },
+        perSecond: perSecond.map((l) => l.join(',')),
+      };
+    })()`);
+    const seen = {};
+    for (const z of [1, 2, 4]) {
+      await js(d({ type: 'set-zoom', zoom: z }));
+      await sleep(250);
+      const m = await measure();
+      seen[z] = m;
+      const off = (p) => Math.abs(p.marker - p.tick);
+      check(`zoom ${z}: Start and Stop sit on their ruler ticks`, off(m.start) <= 1 && off(m.stop) <= 1, { start: m.start, stop: m.stop });
+      check(`zoom ${z}: the frame labels repeat the same way in every second`, m.perSecond.length === 8 && m.perSecond.every((l) => l === m.perSecond[0]), m.perSecond);
+      if (dir) {
+        await sleep(500);
+        await win.webContents.capturePage();
+        await sleep(300);
+        await fs.writeFile(path.join(dir, `edit-view-zoom-${z}.png`), (await win.webContents.capturePage()).toPNG());
+      }
+    }
+    check('Time In and Time Out never change the window’s height', seen[1].height === seen[2].height && seen[2].height === seen[4].height, [seen[1].height, seen[2].height, seen[4].height]);
+    // Scrolled to the second half at zoom 2, Time In keeps 4 s at the left edge.
+    // (A hidden window paints no frames, so the scroll event is sent by hand.)
+    await js(d({ type: 'set-zoom', zoom: 2 }));
+    await sleep(200);
+    await js('(() => { const s = document.querySelector(".ev-scroller"); s.scrollLeft = s.scrollWidth / 2; s.dispatchEvent(new Event("scroll")); return s.scrollLeft; })()');
+    await sleep(200);
+    const leftTime = () => js('document.querySelector(".ev-time.left .field").textContent');
+    const before = await leftTime();
+    await js(d({ type: 'zoom', dir: 1 }));
+    await sleep(250);
+    const after = await leftTime();
+    check('Time In keeps the time at the left edge of the view', before === '[00:00:04.00]' && after === before, { before, after });
+    await js(d({ type: 'set-zoom', zoom: 1 }));
+  }
+
   async function scenarioSheet(js, win) {
     const dir = process.env.ROSEFLOW_SMOKE_SHOT_DIR;
     if (!dir) { check('shot directory provided', false, 'set ROSEFLOW_SMOKE_SHOT_DIR'); return; }

@@ -79,11 +79,11 @@ const onlyIndex = args.indexOf('--only');
 const only = onlyIndex >= 0 ? args[onlyIndex + 1].split(',') : null;
 // --shots <dir> captures the review screenshots and contact sheets while running the review-flow scenarios.
 // (`resume` expects the profile `first` leaves behind, so it is not part of this sequence.)
-const sequence = shotsDir ? ['course', 'sheet'] : (only || ['first', 'resume', 'malformed', 'savefail', 'loadfail', 'legacy', 'legacy2', 'practice', 'course']);
+const sequence = shotsDir ? ['course', 'sheet'] : (only || ['first', 'resume', 'malformed', 'savefail', 'loadfail', 'legacy', 'legacy2', 'practice', 'course', 'zoom']);
 const summary = [];
 for (const scenario of sequence) {
-  if (scenario === 'course') {
-    // The review flow starts from a fresh profile.
+  if (scenario === 'course' || scenario === 'zoom') {
+    // The review flow (and the zoom checks) start from a fresh profile.
     await fs.rm(path.join(userData, 'progress.json'), { force: true });
   }
   if (scenario === 'malformed') {

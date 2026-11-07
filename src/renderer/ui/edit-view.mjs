@@ -25,8 +25,9 @@ const ROW_H = 12;
 const ROW_TOP = 14;
 const DIGITAL_H = ROW_TOP + DIGITAL_CHANNELS.length * ROW_H + 20;
 const HIT_PX = 6;
-// Frame-number labels on the ruler at each zoom (Time In / Time Out).
-const LABEL_STEP = { 1: 10, 2: 4, 4: 2 };
+// Frame-number labels on the ruler at each zoom (Time In / Time Out). Each
+// step divides the 30 frames of a second, so every second is labelled alike.
+const LABEL_STEP = { 1: 10, 2: 5, 4: 2 };
 
 function stepPath(values, from = 0, to = FRAME_COUNT) {
   const y = (v) => (100 - percentOf(v)).toFixed(2);
@@ -262,7 +263,7 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
         nodes.push(el('span', { class: 'rl-tick major', style: `left:${left}` }));
         if (f < FRAME_COUNT) nodes.push(el('span', { class: 'rl-sec', style: `left:${left}` }, el('span', { text: '0 min' }), el('span', { text: `${String(f / FPS).padStart(2, '0')} sec` })));
         if (f < FRAME_COUNT) nodes.push(el('span', { class: 'rl-num', style: `left:${left}`, text: '0' }));
-      } else if (f % step === 0) {
+      } else if ((f % FPS) % step === 0) {
         nodes.push(el('span', { class: 'rl-tick', style: `left:${left}` }));
         nodes.push(el('span', { class: 'rl-num', style: `left:${left}`, text: String(f % FPS) }));
       }
@@ -273,9 +274,11 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
   function markers(group, sim, height) {
     // Start green, Punch In blue, Punch Out orange (solid); Stop red, dashed (manual pp. 77, 237).
     // Punch markers first so Start and Stop stay visible when they coincide.
+    // A marker sits on its frame's edge, like the ruler tick and the playhead,
+    // so it stays on its tick at every zoom.
     const lines = [['punch-in', sim.punchIn, '#0000ff'], ['punch-out', sim.punchOut, '#ffa500'], ['start', sim.start, '#00ff00'], ['stop', sim.stop, '#ff0000']];
     for (const [cls, f, color] of lines) {
-      group.append(svg('line', { class: `marker ${cls}`, x1: f + 0.5, x2: f + 0.5, y1: 0, y2: height, stroke: color, 'stroke-width': 2, 'stroke-dasharray': cls === 'stop' ? '4 2' : null, 'vector-effect': 'non-scaling-stroke' }));
+      group.append(svg('line', { class: `marker ${cls}`, x1: f, x2: f, y1: 0, y2: height, stroke: color, 'stroke-width': 2, 'stroke-dasharray': cls === 'stop' ? '4 2' : null, 'vector-effect': 'non-scaling-stroke' }));
     }
   }
 
@@ -335,7 +338,7 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
     refs.rightTime.lastChild.textContent = `[${formatTime(right)}]`;
   }
 
-  let rulerZoom = null;
+  let shownZoom = null;
   function update(state, revealed = []) {
     const { sim } = state;
     last = { sim, revealed };
@@ -349,8 +352,15 @@ export function mountEditView(container, { dispatch, onContextMenu }) {
     refs.empty.hidden = anyPane;
     if (!anyPane) return;
 
-    refs.inner.style.width = `${sim.zoom * 100}%`;
-    if (rulerZoom !== sim.zoom) { renderRuler(sim.zoom); rulerZoom = sim.zoom; }
+    if (shownZoom !== sim.zoom) {
+      // Time In and Time Out keep the time at the view's left edge.
+      const s = refs.scroller;
+      const leftAt = s.scrollWidth ? s.scrollLeft / s.scrollWidth : 0;
+      refs.inner.style.width = `${sim.zoom * 100}%`;
+      renderRuler(sim.zoom);
+      s.scrollLeft = leftAt * s.scrollWidth;
+      shownZoom = sim.zoom;
+    }
     if (show('analog')) renderAnalog(sim);
     if (show('digital')) renderDigital(sim);
 

@@ -13,7 +13,8 @@
     "make": "electron-forge make",
     "test": "node --test \"tests/**/*.test.mjs\"",
     "smoke": "node scripts/smoke.mjs",
-    "record": "node scripts/record.mjs"
+    "record": "node scripts/record.mjs",
+    "desktop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/desktop.ps1"
   },
   "devDependencies": {
     "@electron-forge/cli": "8.0.1",
